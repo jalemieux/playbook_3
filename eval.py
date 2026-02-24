@@ -6,10 +6,12 @@ import time
 from datetime import datetime
 from pathlib import Path
 
+import litellm
 import yaml
 
 from src.agent import handler
 from src.config import load_config
+from src.llm import TOOL_SCHEMA
 
 
 def format_response(result: dict) -> str:
@@ -30,25 +32,57 @@ def load_eval_config(path: Path) -> dict:
     return yaml.safe_load(Path(path).read_text())
 
 
+EVAL_SYSTEM_PROMPT = """You are a personal assistant. You have one tool: execute_bash. Use it to accomplish tasks on the user's computer. You are running on Ubuntu.
+
+When you receive a message:
+- If it requires action, use bash to accomplish it.
+- If it's conversational, just reply.
+- If you're unsure what the user wants, ask.
+
+Keep replies short and direct."""
+
+
 def build_agent_config(model_entry: dict, base_config: dict) -> dict:
     """Merge a model entry into the base config."""
     return {**base_config, "model": model_entry["model"]}
 
 
-def run_single(prompt_text: str, config: dict) -> tuple[str, float]:
-    """Run one prompt through the agent loop. Returns (response, elapsed_seconds)."""
-    response = []
+def run_single(prompt_text: str, model: str) -> tuple[dict, float]:
+    """Single-shot LLM call. Returns (result_dict, elapsed_seconds).
 
-    def collect(text):
-        response.append(text)
-
+    result_dict has 'content' (str|None) and 'tool_calls' (list[dict]|None).
+    """
+    messages = [
+        {"role": "system", "content": EVAL_SYSTEM_PROMPT},
+        {"role": "user", "content": prompt_text},
+    ]
     start = time.time()
     try:
-        handler(prompt_text, collect, config)
+        response = litellm.completion(
+            model=model,
+            messages=messages,
+            tools=[TOOL_SCHEMA],
+            timeout=60,
+        )
+        message = response.choices[0].message
+        tool_calls = None
+        if message.tool_calls:
+            tool_calls = [
+                {
+                    "id": tc.id,
+                    "type": tc.type,
+                    "function": {
+                        "name": tc.function.name,
+                        "arguments": tc.function.arguments,
+                    },
+                }
+                for tc in message.tool_calls
+            ]
+        result = {"content": message.content, "tool_calls": tool_calls}
     except Exception as e:
-        response.append(f"ERROR: {e}")
+        result = {"content": f"ERROR: {e}", "tool_calls": None}
     elapsed = time.time() - start
-    return response[0] if response else "[no response]", elapsed
+    return result, elapsed
 
 
 def run_all(models: list[dict], prompts: list[dict], base_config: dict) -> list[dict]:

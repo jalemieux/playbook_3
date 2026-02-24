@@ -32,26 +32,58 @@ def test_build_agent_config():
 
 
 def test_run_single():
-    """run_single calls handler and returns (response, elapsed)."""
-    from eval import run_single
-    config = {"model": "test/model-1", "bash_timeout": 5, "max_iterations": 10}
-    with patch("eval.handler") as mock_handler:
-        def fake_handler(text, reply_fn, cfg, status_fn=None):
-            reply_fn("test response")
-        mock_handler.side_effect = fake_handler
-        response, elapsed = run_single("Hello", config)
-    assert response == "test response"
+    """run_single makes a single-shot LiteLLM call and returns structured result."""
+    from eval import run_single, EVAL_SYSTEM_PROMPT
+
+    mock_response = MagicMock()
+    mock_response.choices = [MagicMock()]
+    mock_response.choices[0].message.content = "I'll do that."
+    mock_response.choices[0].message.tool_calls = None
+
+    with patch("eval.litellm.completion", return_value=mock_response) as mock_comp:
+        result, elapsed = run_single("Hello", "test/model-1")
+
+    assert result["content"] == "I'll do that."
+    assert result["tool_calls"] is None
     assert elapsed >= 0
+    # Verify it used the eval system prompt
+    call_args = mock_comp.call_args
+    messages = call_args.kwargs["messages"]
+    assert messages[0]["role"] == "system"
+    assert "Ubuntu" in messages[0]["content"]
+
+
+def test_run_single_with_tool_calls():
+    """run_single captures tool_calls from response."""
+    from eval import run_single
+
+    mock_tc = MagicMock()
+    mock_tc.id = "call_1"
+    mock_tc.type = "function"
+    mock_tc.function.name = "execute_bash"
+    mock_tc.function.arguments = '{"command": "ls"}'
+
+    mock_response = MagicMock()
+    mock_response.choices = [MagicMock()]
+    mock_response.choices[0].message.content = "Let me check."
+    mock_response.choices[0].message.tool_calls = [mock_tc]
+
+    with patch("eval.litellm.completion", return_value=mock_response):
+        result, elapsed = run_single("List files", "test/model-1")
+
+    assert result["content"] == "Let me check."
+    assert len(result["tool_calls"]) == 1
+    assert result["tool_calls"][0]["function"]["name"] == "execute_bash"
 
 
 def test_run_single_error():
-    """run_single captures exceptions as error text."""
+    """run_single captures exceptions."""
     from eval import run_single
-    config = {"model": "test/model-1", "bash_timeout": 5, "max_iterations": 10}
-    with patch("eval.handler", side_effect=Exception("API down")):
-        response, elapsed = run_single("Hello", config)
-    assert "ERROR" in response
-    assert "API down" in response
+
+    with patch("eval.litellm.completion", side_effect=Exception("API down")):
+        result, elapsed = run_single("Hello", "test/model-1")
+
+    assert "ERROR" in result["content"]
 
 
 def test_write_report(tmp_path):
