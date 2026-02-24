@@ -1,5 +1,6 @@
-model: anthropic/claude-opus-4-5
+model: anthropic/claude-sonnet-4-6
 telegram_bot_token: ${TELEGRAM_BOT_TOKEN}
+telegram_allowed_users: []  # Telegram user IDs allowed to use the bot. Empty = allow all.
 gmail_credentials_path: ./credentials.json
 bash_timeout: 30
 max_iterations: 10

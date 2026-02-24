@@ -10,6 +10,12 @@ logger = logging.getLogger(__name__)
 async def _on_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Handle incoming Telegram message."""
     config = context.bot_data["config"]
+
+    allowed_users = config.get("telegram_allowed_users", [])
+    if allowed_users and update.effective_user.id not in allowed_users:
+        logger.warning("Unauthorized Telegram user: %s (id=%s)", update.effective_user.username, update.effective_user.id)
+        return
+
     text = update.message.text
     if not text:
         return
