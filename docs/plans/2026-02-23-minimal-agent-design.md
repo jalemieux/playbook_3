@@ -26,7 +26,7 @@ Secondary axis: how do different models (Opus, Kimi K2, Minimax, o3) handle inte
 ┌──────────────────────────────────────────┐
 │  Agent Loop                              │
 │  ┌────────────────────────────────────┐  │
-│  │ OpenRouter API (tool-use mode)     │  │
+│  │ LiteLLM (multi-provider tool-use)  │  │
 │  │ Single tool: execute_bash(command) │  │
 │  └─────────────┬──────────────────────┘  │
 │                │                         │
@@ -48,7 +48,7 @@ Secondary axis: how do different models (Opus, Kimi K2, Minimax, o3) handle inte
 |--------|----------|-----------|
 | Action model | Tool-use API with single tool | Supports multi-step reasoning (run → observe → run again). More structured than text-based command extraction. |
 | Channels | Telegram + Gmail + CLI | Email (async/batched) and Telegram (real-time) test intent extraction across modalities. CLI enables testing without channel infra. |
-| Model access | OpenRouter (thin client) | Single integration point for all models. LiteLLM as escape hatch if tool-use parsing breaks across models. |
+| Model access | LiteLLM | Unified interface for Anthropic, OpenAI, Minimax, OpenRouter, and other providers. API keys auto-discovered from env vars. |
 | State | Stateless | Each message is independent. No memory, no history. Tests pure intent extraction. |
 | System prompt | ~50 words | No channel awareness, no capability lists, no examples. The model decides what to do based on the message alone. |
 | Language | Python | Consistent with playbook_2/playbook_crm ecosystem. |
@@ -74,7 +74,7 @@ Keep replies short and direct.
 | `main.py` | 30 | Wire channels to agent, start event loop, CLI arg parsing (`--channel`) |
 | `src/agent.py` | 60 | Agentic loop: LLM call → tool exec → loop or return |
 | `src/bash.py` | 15 | `execute_bash(command, timeout)` → stdout + stderr |
-| `src/openrouter.py` | 50 | Thin HTTP client for OpenRouter chat completions + tool-use |
+| `src/llm.py` | 50 | LiteLLM wrapper — `chat_completion(messages, model)` with tool-use |
 | `src/channels/telegram.py` | 40 | Telegram adapter → `handler(text, reply_fn)` |
 | `src/channels/gmail.py` | 60 | Gmail polling + reply → `handler(text, reply_fn)` |
 | `src/channels/cli.py` | 15 | stdin/stdout adapter for testing |
@@ -91,7 +91,7 @@ playbook_3/
 ├── src/
 │   ├── agent.py
 │   ├── bash.py
-│   ├── openrouter.py
+│   ├── llm.py
 │   ├── channels/
 │   │   ├── telegram.py
 │   │   ├── gmail.py
@@ -100,7 +100,9 @@ playbook_3/
 ├── tests/
 │   ├── test_agent.py
 │   ├── test_bash.py
-│   └── test_openrouter.py
+│   ├── test_config.py
+│   ├── test_eval.py
+│   └── test_llm.py
 ├── requirements.txt
 └── README.md
 ```
@@ -108,13 +110,14 @@ playbook_3/
 ## Config
 
 ```yaml
-model: "anthropic/claude-sonnet-4"
-openrouter_api_key: ${OPENROUTER_API_KEY}
+model: anthropic/claude-opus-4-5
 telegram_bot_token: ${TELEGRAM_BOT_TOKEN}
 gmail_credentials_path: ./credentials.json
 bash_timeout: 30
 max_iterations: 10
 ```
+
+API keys are env vars consumed by LiteLLM directly (e.g. `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`). The model prefix determines provider routing.
 
 ## Error Handling
 
@@ -153,3 +156,7 @@ model: "openai/o3"                     # OpenAI o3
 ```
 
 Same prompt, same tool, same channels. Compare decision quality across models.
+
+## Changelog
+
+- **2026-02-23:** Migrated from hand-rolled OpenRouter httpx client (`src/openrouter.py`) to LiteLLM (`src/llm.py`). API keys now auto-discovered from env vars. Config simplified — removed `openrouter_api_key` and `provider` fields. Added eval framework tests.
