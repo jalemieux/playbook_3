@@ -58,14 +58,39 @@ model: "openai/o3"                   # OpenAI o3
 
 ## Eval Framework
 
-Compare model performance across prompts:
+Compare model performance across prompts with LLM-as-judge scoring:
 
 ```bash
-# Edit eval.yaml with your models and prompts, then:
+# Run eval with default config (7 models × 5 prompts):
 python eval.py
 
 # Custom config and output:
 python eval.py --config my-eval.yaml --output my-report.md
+```
+
+### How it works
+
+1. Each prompt is sent to every model as a **single-shot** LiteLLM call (no agentic loop)
+2. A **judge model** scores each response against weighted criteria
+3. Results are written as markdown with a **summary leaderboard** and per-prompt detail
+
+### eval.yaml format
+
+```yaml
+judge:
+  model: anthropic/claude-sonnet-4-6
+
+models:
+  - name: claude-sonnet-4
+    model: anthropic/claude-sonnet-4-6
+
+prompts:
+  - name: schedule-reminder
+    text: "Remind me to call the dentist every weekday at 9am"
+    criteria:
+      - name: uses-scheduler
+        weight: 3
+        description: Uses crontab or systemd timer
 ```
 
 Results are saved as timestamped markdown in `results/`.
@@ -76,7 +101,7 @@ Results are saved as timestamped markdown in `results/`.
 pytest tests/ -v
 ```
 
-20 tests across 5 modules (config, bash, llm, agent, eval).
+26 tests across 5 modules (config, bash, llm, agent, eval).
 
 ## Architecture
 

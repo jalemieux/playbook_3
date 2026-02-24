@@ -1,3 +1,4 @@
+import json
 import time
 from pathlib import Path
 from unittest.mock import patch, MagicMock
@@ -20,49 +21,81 @@ def test_load_eval_config(tmp_path):
     assert cfg["prompts"][0]["text"] == "Hello"
 
 
-def test_build_agent_config():
-    """build_agent_config merges model entry into base config."""
-    from eval import build_agent_config
-    base = {"bash_timeout": 30, "max_iterations": 10}
-    model_entry = {"name": "test-model", "model": "test/model-1"}
-    result = build_agent_config(model_entry, base)
-    assert result["model"] == "test/model-1"
-    assert result["bash_timeout"] == 30
-
 
 def test_run_single():
-    """run_single calls handler and returns (response, elapsed)."""
-    from eval import run_single
-    config = {"model": "test/model-1", "bash_timeout": 5, "max_iterations": 10}
-    with patch("eval.handler") as mock_handler:
-        def fake_handler(text, reply_fn, cfg, status_fn=None):
-            reply_fn("test response")
-        mock_handler.side_effect = fake_handler
-        response, elapsed = run_single("Hello", config)
-    assert response == "test response"
+    """run_single makes a single-shot LiteLLM call and returns structured result."""
+    from eval import run_single, EVAL_SYSTEM_PROMPT
+
+    mock_response = MagicMock()
+    mock_response.choices = [MagicMock()]
+    mock_response.choices[0].message.content = "I'll do that."
+    mock_response.choices[0].message.tool_calls = None
+
+    with patch("eval.litellm.completion", return_value=mock_response) as mock_comp:
+        result, elapsed = run_single("Hello", "test/model-1")
+
+    assert result["content"] == "I'll do that."
+    assert result["tool_calls"] is None
     assert elapsed >= 0
+    # Verify it used the eval system prompt
+    call_args = mock_comp.call_args
+    messages = call_args.kwargs["messages"]
+    assert messages[0]["role"] == "system"
+    assert "Ubuntu" in messages[0]["content"]
+
+
+def test_run_single_with_tool_calls():
+    """run_single captures tool_calls from response."""
+    from eval import run_single
+
+    mock_tc = MagicMock()
+    mock_tc.id = "call_1"
+    mock_tc.type = "function"
+    mock_tc.function.name = "execute_bash"
+    mock_tc.function.arguments = '{"command": "ls"}'
+
+    mock_response = MagicMock()
+    mock_response.choices = [MagicMock()]
+    mock_response.choices[0].message.content = "Let me check."
+    mock_response.choices[0].message.tool_calls = [mock_tc]
+
+    with patch("eval.litellm.completion", return_value=mock_response):
+        result, elapsed = run_single("List files", "test/model-1")
+
+    assert result["content"] == "Let me check."
+    assert len(result["tool_calls"]) == 1
+    assert result["tool_calls"][0]["function"]["name"] == "execute_bash"
 
 
 def test_run_single_error():
-    """run_single captures exceptions as error text."""
+    """run_single captures exceptions."""
     from eval import run_single
-    config = {"model": "test/model-1", "bash_timeout": 5, "max_iterations": 10}
-    with patch("eval.handler", side_effect=Exception("API down")):
-        response, elapsed = run_single("Hello", config)
-    assert "ERROR" in response
-    assert "API down" in response
+
+    with patch("eval.litellm.completion", side_effect=Exception("API down")):
+        result, elapsed = run_single("Hello", "test/model-1")
+
+    assert "ERROR" in result["content"]
 
 
 def test_write_report(tmp_path):
-    """write_report generates markdown with all results."""
+    """write_report generates markdown with summary table and per-prompt detail."""
     from eval import write_report
+
     results = [
         {
-            "prompt_name": "greeting",
-            "prompt_text": "Hello",
+            "prompt_name": "test-prompt",
+            "prompt_text": "Do something",
             "model_results": [
-                {"model_name": "model-a", "response": "Hi there!", "elapsed": 1.5},
-                {"model_name": "model-b", "response": "Hey!", "elapsed": 2.0},
+                {
+                    "model_name": "model-a",
+                    "result": {"content": "Done", "tool_calls": None},
+                    "formatted": "Done",
+                    "elapsed": 1.5,
+                    "scores": {
+                        "did-it": {"score": 1.0, "reasoning": "Yes"},
+                    },
+                    "weighted_score": 0.85,
+                },
             ],
         }
     ]
@@ -70,7 +103,148 @@ def test_write_report(tmp_path):
     write_report(results, output)
     text = output.read_text()
     assert "# Eval Results" in text
-    assert "Hello" in text
+    assert "Summary" in text
     assert "model-a" in text
-    assert "Hi there!" in text
+    assert "0.85" in text
+    assert "did-it" in text
     assert "1.5s" in text
+    assert "Done" in text
+
+
+def test_format_response_text_only():
+    """format_response returns content when no tool calls."""
+    from eval import format_response
+    result = {"content": "Hello there!", "tool_calls": None}
+    assert format_response(result) == "Hello there!"
+
+
+def test_format_response_with_tool_calls():
+    """format_response includes tool call details."""
+    from eval import format_response
+    result = {
+        "content": "I'll set that up for you.",
+        "tool_calls": [
+            {
+                "id": "call_1",
+                "type": "function",
+                "function": {
+                    "name": "execute_bash",
+                    "arguments": '{"command": "crontab -e"}',
+                },
+            }
+        ],
+    }
+    text = format_response(result)
+    assert "I'll set that up for you." in text
+    assert "execute_bash" in text
+    assert "crontab -e" in text
+
+
+def test_judge_single():
+    """judge_single sends response + criteria to judge model and parses scores."""
+    from eval import judge_single
+
+    judge_response_json = json.dumps({
+        "uses-scheduler": {"score": 1.0, "reasoning": "Uses crontab"},
+        "correct-schedule": {"score": 0.5, "reasoning": "Close but not exact"},
+    })
+    mock_response = MagicMock()
+    mock_response.choices = [MagicMock()]
+    mock_response.choices[0].message.content = judge_response_json
+
+    criteria = [
+        {"name": "uses-scheduler", "weight": 3, "description": "Uses crontab"},
+        {"name": "correct-schedule", "weight": 2, "description": "Correct cron"},
+    ]
+
+    with patch("eval.litellm.completion", return_value=mock_response):
+        scores = judge_single(
+            prompt_text="Set a reminder",
+            response_text="I'll use crontab...",
+            criteria=criteria,
+            judge_model="test/judge-model",
+        )
+
+    assert scores["uses-scheduler"]["score"] == 1.0
+    assert scores["correct-schedule"]["score"] == 0.5
+    assert "reasoning" in scores["uses-scheduler"]
+
+
+def test_judge_single_json_parse_error():
+    """judge_single handles malformed JSON from judge."""
+    from eval import judge_single
+
+    mock_response = MagicMock()
+    mock_response.choices = [MagicMock()]
+    mock_response.choices[0].message.content = "This is not JSON"
+
+    criteria = [{"name": "test", "weight": 1, "description": "Test"}]
+
+    with patch("eval.litellm.completion", return_value=mock_response):
+        scores = judge_single("prompt", "response", criteria, "test/judge")
+
+    # Should return zero scores on parse failure
+    assert scores["test"]["score"] == 0.0
+
+
+def test_run_all():
+    """run_all runs every prompt × model and collects structured results."""
+    from eval import run_all
+
+    models = [{"name": "model-a", "model": "test/model-a"}]
+    prompts = [{"name": "greet", "text": "Hello", "criteria": []}]
+
+    mock_response = MagicMock()
+    mock_response.choices = [MagicMock()]
+    mock_response.choices[0].message.content = "Hi!"
+    mock_response.choices[0].message.tool_calls = None
+
+    with patch("eval.litellm.completion", return_value=mock_response):
+        results = run_all(models, prompts)
+
+    assert len(results) == 1
+    assert results[0]["prompt_name"] == "greet"
+    assert len(results[0]["model_results"]) == 1
+    assert results[0]["model_results"][0]["result"]["content"] == "Hi!"
+
+
+def test_judge_all():
+    """judge_all scores all model results and computes weighted scores."""
+    from eval import judge_all
+
+    results = [
+        {
+            "prompt_name": "test",
+            "prompt_text": "Do something",
+            "model_results": [
+                {
+                    "model_name": "model-a",
+                    "result": {"content": "Done", "tool_calls": None},
+                    "formatted": "Done",
+                    "elapsed": 1.0,
+                }
+            ],
+        }
+    ]
+    prompts = [
+        {
+            "name": "test",
+            "text": "Do something",
+            "criteria": [
+                {"name": "did-it", "weight": 2, "description": "Did the thing"},
+                {"name": "quality", "weight": 1, "description": "Did it well"},
+            ],
+        }
+    ]
+
+    judge_scores = {
+        "did-it": {"score": 1.0, "reasoning": "Yes"},
+        "quality": {"score": 0.5, "reasoning": "Meh"},
+    }
+    with patch("eval.judge_single", return_value=judge_scores):
+        scored = judge_all(results, prompts, "test/judge")
+
+    mr = scored[0]["model_results"][0]
+    assert mr["scores"] == judge_scores
+    # Weighted: (1.0*2 + 0.5*1) / (2+1) = 2.5/3 ≈ 0.833
+    assert abs(mr["weighted_score"] - 0.833) < 0.01
