@@ -13,10 +13,18 @@ When you receive a message:
 Keep replies short and direct."""
 
 
-def handler(text: str, reply_fn, config: dict) -> None:
+def _truncate(text: str, max_len: int = 200) -> str:
+    """Truncate text with ellipsis indicator."""
+    if len(text) <= max_len:
+        return text
+    return text[:max_len] + f"\n  … truncated ({len(text)} chars total)"
+
+
+def handler(text: str, reply_fn, config: dict, status_fn=None) -> None:
     """Process a user message through the agent loop."""
     model = config["model"]
     api_key = config["openrouter_api_key"]
+    provider = config.get("provider")
     timeout = config.get("bash_timeout", 30)
     max_iter = config.get("max_iterations", 10)
 
@@ -26,7 +34,11 @@ def handler(text: str, reply_fn, config: dict) -> None:
     ]
 
     for i in range(max_iter):
-        result = chat_completion(messages, model, api_key)
+        if status_fn:
+            status_fn("thinking", "")
+        result = chat_completion(messages, model, api_key, provider=provider)
+        if status_fn:
+            status_fn("done_thinking", "")
 
         if result["tool_calls"] is None:
             reply_fn(result["content"] or "[no response]")
@@ -39,10 +51,17 @@ def handler(text: str, reply_fn, config: dict) -> None:
         for tool_call in result["tool_calls"]:
             args = json.loads(tool_call["function"]["arguments"])
             command = args["command"]
+
+            if status_fn:
+                status_fn("tool_call", f'Bash("{command}")')
+
             try:
                 output = execute_bash(command, timeout=timeout)
             except TimeoutError as e:
                 output = f"Error: {e}"
+
+            if status_fn:
+                status_fn("tool_result", _truncate(output.strip()))
 
             messages.append({
                 "role": "tool",

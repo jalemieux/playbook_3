@@ -25,22 +25,27 @@ def chat_completion(
     messages: list[dict],
     model: str,
     api_key: str,
+    provider: dict | None = None,
 ) -> dict:
     """Call OpenRouter chat completions with execute_bash tool.
 
     Returns dict with 'content' (str|None) and 'tool_calls' (list|None).
     """
+    body = {
+        "model": model,
+        "messages": messages,
+        "tools": [TOOL_SCHEMA],
+    }
+    if provider:
+        body["provider"] = provider
+
     resp = httpx.post(
         API_URL,
         headers={
             "Authorization": f"Bearer {api_key}",
             "Content-Type": "application/json",
         },
-        json={
-            "model": model,
-            "messages": messages,
-            "tools": [TOOL_SCHEMA],
-        },
+        json=body,
         timeout=60,
     )
     resp.raise_for_status()

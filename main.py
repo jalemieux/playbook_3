@@ -5,6 +5,7 @@ from pathlib import Path
 from src.config import load_config
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(name)s %(levelname)s %(message)s")
+logging.getLogger("httpx").setLevel(logging.WARNING)
 
 
 def main():

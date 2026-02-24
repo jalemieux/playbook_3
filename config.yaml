@@ -1,6 +1,11 @@
-model: "anthropic/claude-sonnet-4"
+model: ${MODEL}
 openrouter_api_key: ${OPENROUTER_API_KEY}
 telegram_bot_token: ${TELEGRAM_BOT_TOKEN}
 gmail_credentials_path: ./credentials.json
 bash_timeout: 30
 max_iterations: 10
+
+# Provider routing — pin to specific providers for speed/reliability
+# provider:
+#   order: ["anthropic"]        # try Anthropic first
+#   allow_fallbacks: false      # don't fall back to other providers
