@@ -1,6 +1,7 @@
 """Lightweight eval framework — run prompts across models, compare results."""
 
 import argparse
+import json
 import time
 from datetime import datetime
 from pathlib import Path
@@ -9,6 +10,19 @@ import yaml
 
 from src.agent import handler
 from src.config import load_config
+
+
+def format_response(result: dict) -> str:
+    """Format LLM response (content + tool_calls) as readable text."""
+    parts = []
+    if result.get("content"):
+        parts.append(result["content"])
+    if result.get("tool_calls"):
+        for tc in result["tool_calls"]:
+            fn = tc["function"]
+            args = json.loads(fn["arguments"])
+            parts.append(f"[Tool call: {fn['name']}({json.dumps(args)})]")
+    return "\n".join(parts) if parts else "[no response]"
 
 
 def load_eval_config(path: Path) -> dict:

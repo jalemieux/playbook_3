@@ -1,3 +1,4 @@
+import json
 import time
 from pathlib import Path
 from unittest.mock import patch, MagicMock
@@ -74,3 +75,32 @@ def test_write_report(tmp_path):
     assert "model-a" in text
     assert "Hi there!" in text
     assert "1.5s" in text
+
+
+def test_format_response_text_only():
+    """format_response returns content when no tool calls."""
+    from eval import format_response
+    result = {"content": "Hello there!", "tool_calls": None}
+    assert format_response(result) == "Hello there!"
+
+
+def test_format_response_with_tool_calls():
+    """format_response includes tool call details."""
+    from eval import format_response
+    result = {
+        "content": "I'll set that up for you.",
+        "tool_calls": [
+            {
+                "id": "call_1",
+                "type": "function",
+                "function": {
+                    "name": "execute_bash",
+                    "arguments": '{"command": "crontab -e"}',
+                },
+            }
+        ],
+    }
+    text = format_response(result)
+    assert "I'll set that up for you." in text
+    assert "execute_bash" in text
+    assert "crontab -e" in text
