@@ -20,8 +20,8 @@ def _truncate(text: str, max_len: int = 200) -> str:
     return text[:max_len] + f"\n  … truncated ({len(text)} chars total)"
 
 
-def handler(text: str, reply_fn, config: dict, status_fn=None) -> None:
-    """Process a user message through the agent loop."""
+def run(text: str, config: dict, status_fn=None) -> str:
+    """Execute a task through the agent loop. Returns the final response text."""
     model = config["model"]
     timeout = config.get("bash_timeout", 30)
     max_iter = config.get("max_iterations", 10)
@@ -39,11 +39,8 @@ def handler(text: str, reply_fn, config: dict, status_fn=None) -> None:
             status_fn("done_thinking", "")
 
         if result["tool_calls"] is None:
-            reply_fn(result["content"] or "[no response]")
-            return
+            return result["content"] or "[no response]"
 
-        # Process tool calls
-        # Append the assistant message with tool calls
         messages.append({"role": "assistant", "tool_calls": result["tool_calls"], "content": result.get("content")})
 
         for tool_call in result["tool_calls"]:
@@ -67,4 +64,9 @@ def handler(text: str, reply_fn, config: dict, status_fn=None) -> None:
                 "content": output,
             })
 
-    reply_fn("Stopped: reached maximum iteration limit.")
+    return "Stopped: reached maximum iteration limit."
+
+
+def handler(text: str, reply_fn, config: dict, status_fn=None) -> None:
+    """Process a user message through the agent loop."""
+    reply_fn(run(text, config, status_fn))
