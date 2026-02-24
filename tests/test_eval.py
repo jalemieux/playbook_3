@@ -23,19 +23,17 @@ def test_load_eval_config(tmp_path):
 def test_build_agent_config():
     """build_agent_config merges model entry into base config."""
     from eval import build_agent_config
-    base = {"openrouter_api_key": "sk-test", "bash_timeout": 30, "max_iterations": 10}
+    base = {"bash_timeout": 30, "max_iterations": 10}
     model_entry = {"name": "test-model", "model": "test/model-1"}
     result = build_agent_config(model_entry, base)
     assert result["model"] == "test/model-1"
-    assert result["openrouter_api_key"] == "sk-test"
     assert result["bash_timeout"] == 30
 
 
 def test_run_single():
     """run_single calls handler and returns (response, elapsed)."""
     from eval import run_single
-    config = {"model": "test/model-1", "openrouter_api_key": "sk-test",
-              "bash_timeout": 5, "max_iterations": 10}
+    config = {"model": "test/model-1", "bash_timeout": 5, "max_iterations": 10}
     with patch("eval.handler") as mock_handler:
         def fake_handler(text, reply_fn, cfg, status_fn=None):
             reply_fn("test response")
@@ -48,8 +46,7 @@ def test_run_single():
 def test_run_single_error():
     """run_single captures exceptions as error text."""
     from eval import run_single
-    config = {"model": "test/model-1", "openrouter_api_key": "sk-test",
-              "bash_timeout": 5, "max_iterations": 10}
+    config = {"model": "test/model-1", "bash_timeout": 5, "max_iterations": 10}
     with patch("eval.handler", side_effect=Exception("API down")):
         response, elapsed = run_single("Hello", config)
     assert "ERROR" in response
