@@ -2,6 +2,7 @@
 
 import argparse
 import json
+import re
 import time
 from datetime import datetime
 from pathlib import Path
@@ -83,6 +84,60 @@ def run_single(prompt_text: str, model: str) -> tuple[dict, float]:
         result = {"content": f"ERROR: {e}", "tool_calls": None}
     elapsed = time.time() - start
     return result, elapsed
+
+
+JUDGE_SYSTEM_PROMPT = """You are evaluating an AI assistant's ability to translate user intent into executable Linux (Ubuntu) actions. The assistant has one tool: execute_bash.
+
+You will be given:
+1. The user's original request
+2. The assistant's response (including any tool calls)
+3. A list of criteria to evaluate
+
+Score each criterion from 0.0 to 1.0:
+- 1.0 = fully satisfied
+- 0.5 = partially satisfied
+- 0.0 = not addressed
+
+Return ONLY valid JSON in this format:
+{
+  "criterion_name": {"score": 0.0, "reasoning": "..."},
+  ...
+}"""
+
+
+def judge_single(prompt_text: str, response_text: str, criteria: list[dict], judge_model: str) -> dict:
+    """Score one response against criteria using the judge model.
+
+    Returns {criterion_name: {"score": float, "reasoning": str}}.
+    On JSON parse failure, returns zero scores for all criteria.
+    """
+    criteria_text = "\n".join(
+        f"- {c['name']} (weight {c['weight']}): {c['description']}"
+        for c in criteria
+    )
+    user_msg = (
+        f"## User Request\n{prompt_text}\n\n"
+        f"## Assistant Response\n{response_text}\n\n"
+        f"## Criteria\n{criteria_text}"
+    )
+    messages = [
+        {"role": "system", "content": JUDGE_SYSTEM_PROMPT},
+        {"role": "user", "content": user_msg},
+    ]
+    response = litellm.completion(model=judge_model, messages=messages, timeout=60)
+    raw = response.choices[0].message.content
+
+    try:
+        return json.loads(raw)
+    except json.JSONDecodeError:
+        # Try to extract JSON from markdown code blocks
+        match = re.search(r"```(?:json)?\s*\n?(.*?)\n?```", raw, re.DOTALL)
+        if match:
+            try:
+                return json.loads(match.group(1))
+            except json.JSONDecodeError:
+                pass
+        return {c["name"]: {"score": 0.0, "reasoning": "Judge returned invalid JSON"} for c in criteria}
 
 
 def run_all(models: list[dict], prompts: list[dict], base_config: dict) -> list[dict]:

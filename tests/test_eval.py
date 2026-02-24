@@ -136,3 +136,50 @@ def test_format_response_with_tool_calls():
     assert "I'll set that up for you." in text
     assert "execute_bash" in text
     assert "crontab -e" in text
+
+
+def test_judge_single():
+    """judge_single sends response + criteria to judge model and parses scores."""
+    from eval import judge_single
+
+    judge_response_json = json.dumps({
+        "uses-scheduler": {"score": 1.0, "reasoning": "Uses crontab"},
+        "correct-schedule": {"score": 0.5, "reasoning": "Close but not exact"},
+    })
+    mock_response = MagicMock()
+    mock_response.choices = [MagicMock()]
+    mock_response.choices[0].message.content = judge_response_json
+
+    criteria = [
+        {"name": "uses-scheduler", "weight": 3, "description": "Uses crontab"},
+        {"name": "correct-schedule", "weight": 2, "description": "Correct cron"},
+    ]
+
+    with patch("eval.litellm.completion", return_value=mock_response):
+        scores = judge_single(
+            prompt_text="Set a reminder",
+            response_text="I'll use crontab...",
+            criteria=criteria,
+            judge_model="test/judge-model",
+        )
+
+    assert scores["uses-scheduler"]["score"] == 1.0
+    assert scores["correct-schedule"]["score"] == 0.5
+    assert "reasoning" in scores["uses-scheduler"]
+
+
+def test_judge_single_json_parse_error():
+    """judge_single handles malformed JSON from judge."""
+    from eval import judge_single
+
+    mock_response = MagicMock()
+    mock_response.choices = [MagicMock()]
+    mock_response.choices[0].message.content = "This is not JSON"
+
+    criteria = [{"name": "test", "weight": 1, "description": "Test"}]
+
+    with patch("eval.litellm.completion", return_value=mock_response):
+        scores = judge_single("prompt", "response", criteria, "test/judge")
+
+    # Should return zero scores on parse failure
+    assert scores["test"]["score"] == 0.0
