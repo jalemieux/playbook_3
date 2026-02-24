@@ -1,5 +1,6 @@
 import argparse
 import logging
+import os
 from pathlib import Path
 
 from src.config import load_config
@@ -10,7 +11,8 @@ logging.getLogger("httpx").setLevel(logging.WARNING)
 
 def main():
     parser = argparse.ArgumentParser(description="Minimal agent")
-    parser.add_argument("--channel", choices=["cli", "telegram", "gmail", "all"], default="all")
+    parser.add_argument("--channel", choices=["cli", "telegram", "gmail", "all"],
+                        default=os.environ.get("CHANNEL", "all"))
     parser.add_argument("--config", default="config.yaml")
     args = parser.parse_args()
 

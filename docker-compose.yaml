@@ -1,0 +1,11 @@
+services:
+  agent:
+    build: .
+    env_file: .env
+    environment:
+      - CHANNEL=${CHANNEL:-cli}
+    stdin_open: true
+    tty: true
+    volumes:
+      - ./credentials.json:/app/credentials.json:ro
+      - ./token.json:/app/token.json
