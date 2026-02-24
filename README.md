@@ -12,7 +12,11 @@ Prompt bloat degrades cognition. This project strips agent architecture to first
 ```bash
 python3 -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
-export OPENROUTER_API_KEY=your-key-here
+# Set API key for your chosen provider
+export ANTHROPIC_API_KEY=your-key    # for anthropic/* models
+export OPENAI_API_KEY=your-key       # for openai/* models
+export MINIMAX_API_KEY=your-key      # for minimax/* models
+export OPENROUTER_API_KEY=your-key   # for openrouter/* models
 python main.py --channel cli
 ```
 
@@ -72,7 +76,7 @@ Results are saved as timestamped markdown in `results/`.
 pytest tests/ -v
 ```
 
-19 tests across 5 modules (config, bash, openrouter, agent, eval).
+20 tests across 5 modules (config, bash, llm, agent, eval).
 
 ## Architecture
 
