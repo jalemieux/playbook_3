@@ -3,7 +3,7 @@ import json
 from src.llm import chat_completion
 from src.bash import execute_bash
 
-SYSTEM_PROMPT = """You are a personal assistant. You have one tool: execute_bash. Use it to accomplish tasks on the user's computer. You are running on macOS.
+SYSTEM_PROMPT = """You are a personal assistant. You have one tool: execute_bash. Use it to accomplish tasks on the user's computer. You are running on Ubuntu.
 
 When you receive a message:
 - If it requires action, use bash to accomplish it.
