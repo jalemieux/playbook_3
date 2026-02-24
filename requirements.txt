@@ -1,4 +1,4 @@
-httpx>=0.27
+litellm>=1.0
 pyyaml>=6
 python-telegram-bot>=21
 google-api-python-client>=2.0
