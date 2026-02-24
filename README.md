@@ -52,13 +52,27 @@ model: "minimax/minimax-m1"          # Minimax
 model: "openai/o3"                   # OpenAI o3
 ```
 
+## Eval Framework
+
+Compare model performance across prompts:
+
+```bash
+# Edit eval.yaml with your models and prompts, then:
+python eval.py
+
+# Custom config and output:
+python eval.py --config my-eval.yaml --output my-report.md
+```
+
+Results are saved as timestamped markdown in `results/`.
+
 ## Tests
 
 ```bash
 pytest tests/ -v
 ```
 
-14 tests across 4 modules (config, bash, openrouter, agent).
+19 tests across 5 modules (config, bash, openrouter, agent, eval).
 
 ## Architecture
 
