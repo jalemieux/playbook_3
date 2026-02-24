@@ -140,7 +140,7 @@ def judge_single(prompt_text: str, response_text: str, criteria: list[dict], jud
         return {c["name"]: {"score": 0.0, "reasoning": "Judge returned invalid JSON"} for c in criteria}
 
 
-def run_all(models: list[dict], prompts: list[dict], base_config: dict) -> list[dict]:
+def run_all(models: list[dict], prompts: list[dict]) -> list[dict]:
     """Run every prompt against every model. Returns structured results."""
     results = []
     for prompt in prompts:
@@ -150,16 +150,42 @@ def run_all(models: list[dict], prompts: list[dict], base_config: dict) -> list[
             "model_results": [],
         }
         for model in models:
-            config = build_agent_config(model, base_config)
             print(f"  [{model['name']}] {prompt['name']}...", end=" ", flush=True)
-            response, elapsed = run_single(prompt["text"], config)
+            result, elapsed = run_single(prompt["text"], model["model"])
+            formatted = format_response(result)
             print(f"{elapsed:.1f}s")
             prompt_results["model_results"].append({
                 "model_name": model["name"],
-                "response": response,
+                "result": result,
+                "formatted": formatted,
                 "elapsed": elapsed,
             })
         results.append(prompt_results)
+    return results
+
+
+def judge_all(results: list[dict], prompts: list[dict], judge_model: str) -> list[dict]:
+    """Score all results using the judge model. Mutates and returns results."""
+    prompt_lookup = {p["name"]: p for p in prompts}
+    for entry in results:
+        prompt = prompt_lookup[entry["prompt_name"]]
+        criteria = prompt.get("criteria", [])
+        if not criteria:
+            continue
+        for mr in entry["model_results"]:
+            print(f"  Judging [{mr['model_name']}] {entry['prompt_name']}...", end=" ", flush=True)
+            scores = judge_single(
+                prompt["text"], mr["formatted"], criteria, judge_model
+            )
+            mr["scores"] = scores
+            # Weighted average
+            total_weight = sum(c["weight"] for c in criteria)
+            weighted_sum = sum(
+                scores.get(c["name"], {}).get("score", 0.0) * c["weight"]
+                for c in criteria
+            )
+            mr["weighted_score"] = weighted_sum / total_weight if total_weight else 0.0
+            print(f"{mr['weighted_score']:.2f}")
     return results
 
 

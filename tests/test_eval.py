@@ -183,3 +183,66 @@ def test_judge_single_json_parse_error():
 
     # Should return zero scores on parse failure
     assert scores["test"]["score"] == 0.0
+
+
+def test_run_all():
+    """run_all runs every prompt × model and collects structured results."""
+    from eval import run_all
+
+    models = [{"name": "model-a", "model": "test/model-a"}]
+    prompts = [{"name": "greet", "text": "Hello", "criteria": []}]
+
+    mock_response = MagicMock()
+    mock_response.choices = [MagicMock()]
+    mock_response.choices[0].message.content = "Hi!"
+    mock_response.choices[0].message.tool_calls = None
+
+    with patch("eval.litellm.completion", return_value=mock_response):
+        results = run_all(models, prompts)
+
+    assert len(results) == 1
+    assert results[0]["prompt_name"] == "greet"
+    assert len(results[0]["model_results"]) == 1
+    assert results[0]["model_results"][0]["result"]["content"] == "Hi!"
+
+
+def test_judge_all():
+    """judge_all scores all model results and computes weighted scores."""
+    from eval import judge_all
+
+    results = [
+        {
+            "prompt_name": "test",
+            "prompt_text": "Do something",
+            "model_results": [
+                {
+                    "model_name": "model-a",
+                    "result": {"content": "Done", "tool_calls": None},
+                    "formatted": "Done",
+                    "elapsed": 1.0,
+                }
+            ],
+        }
+    ]
+    prompts = [
+        {
+            "name": "test",
+            "text": "Do something",
+            "criteria": [
+                {"name": "did-it", "weight": 2, "description": "Did the thing"},
+                {"name": "quality", "weight": 1, "description": "Did it well"},
+            ],
+        }
+    ]
+
+    judge_scores = {
+        "did-it": {"score": 1.0, "reasoning": "Yes"},
+        "quality": {"score": 0.5, "reasoning": "Meh"},
+    }
+    with patch("eval.judge_single", return_value=judge_scores):
+        scored = judge_all(results, prompts, "test/judge")
+
+    mr = scored[0]["model_results"][0]
+    assert mr["scores"] == judge_scores
+    # Weighted: (1.0*2 + 0.5*1) / (2+1) = 2.5/3 ≈ 0.833
+    assert abs(mr["weighted_score"] - 0.833) < 0.01
