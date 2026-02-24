@@ -2,7 +2,7 @@ import logging
 from telegram import Update
 from telegram.ext import ApplicationBuilder, MessageHandler, filters, ContextTypes
 
-from src.agent import handler
+from src.orchestrator import handler
 
 logger = logging.getLogger(__name__)
 
@@ -25,7 +25,7 @@ async def _on_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
     # Run agent in thread to avoid blocking the event loop
     import asyncio
     loop = asyncio.get_event_loop()
-    await loop.run_in_executor(None, handler, text, reply_fn, config)
+    await loop.run_in_executor(None, handler, text, reply_fn, config, str(update.message.chat_id))
 
 
 def start_telegram(config: dict) -> None:
