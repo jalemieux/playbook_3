@@ -238,17 +238,22 @@ def main():
     parser = argparse.ArgumentParser(description="Run eval across models")
     parser.add_argument("--config", default="eval.yaml", help="Eval config YAML")
     parser.add_argument("--output", default=None, help="Output markdown path")
-    parser.add_argument("--base-config", default="config.yaml", help="Base agent config")
     args = parser.parse_args()
 
     eval_cfg = load_eval_config(Path(args.config))
-    base_cfg = load_config(Path(args.base_config))
 
     output_path = args.output or f"results/{datetime.now().strftime('%Y-%m-%dT%H-%M')}.md"
     Path(output_path).parent.mkdir(parents=True, exist_ok=True)
 
-    print(f"Running {len(eval_cfg['prompts'])} prompts × {len(eval_cfg['models'])} models\n")
-    results = run_all(eval_cfg["models"], eval_cfg["prompts"], base_cfg)
+    models = eval_cfg["models"]
+    prompts = eval_cfg["prompts"]
+    judge_model = eval_cfg["judge"]["model"]
+
+    print(f"Running {len(prompts)} prompts × {len(models)} models\n")
+    results = run_all(models, prompts)
+
+    print(f"\nJudging with {judge_model}...\n")
+    results = judge_all(results, prompts, judge_model)
 
     write_report(results, Path(output_path))
     print(f"\nReport saved to {output_path}")

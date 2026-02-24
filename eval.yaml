@@ -1,11 +1,99 @@
+judge:
+  model: anthropic/claude-sonnet-4-6
+
 models:
-  - name: claude-sonnet
-    model: anthropic/claude-sonnet-4
+  - name: claude-sonnet-4
+    model: anthropic/claude-sonnet-4-6
+  - name: gpt-4o
+    model: openai/gpt-4o
+  - name: gemini-2.5-flash
+    model: gemini/gemini-2.5-flash
+  - name: minimax-01
+    model: openrouter/minimax/minimax-01
   - name: kimi-k2
-    model: moonshotai/kimi-k2
+    model: openrouter/moonshotai/kimi-k2
+  - name: claude-haiku-4.5
+    model: anthropic/claude-haiku-4-5-20251001
+  - name: gpt-4o-mini
+    model: openai/gpt-4o-mini
 
 prompts:
-  - name: list-python-files
-    text: "List all Python files in the current directory"
-  - name: word-count
-    text: "Count the number of lines in main.py"
+  - name: schedule-reminder
+    text: "Remind me to call the dentist every weekday at 9am"
+    criteria:
+      - name: uses-scheduler
+        weight: 3
+        description: Uses crontab or systemd timer
+      - name: correct-schedule
+        weight: 2
+        description: "Cron expression = weekdays at 9am (0 9 * * 1-5)"
+      - name: creates-script
+        weight: 2
+        description: Creates a shell script or command
+      - name: notification-method
+        weight: 1
+        description: "Uses notify-send, wall, zenity, or log"
+
+  - name: send-email
+    text: "Reach out to alice@example.com about the Q3 budget review"
+    criteria:
+      - name: email-tool
+        weight: 3
+        description: "Uses sendmail, mail, msmtp, curl+SMTP, or python"
+      - name: correct-recipient
+        weight: 2
+        description: Addresses alice@example.com
+      - name: relevant-subject
+        weight: 2
+        description: Subject/body relates to Q3 budget review
+      - name: complete-message
+        weight: 1
+        description: "Reasonable email body, not a stub"
+
+  - name: research-topic
+    text: "Research the current state of nuclear fusion energy and summarize key developments"
+    criteria:
+      - name: web-search
+        weight: 3
+        description: "Uses curl, wget, lynx, w3m, or python requests"
+      - name: multiple-sources
+        weight: 2
+        description: Queries multiple sources or search terms
+      - name: synthesis
+        weight: 2
+        description: "Plans to synthesize findings, not dump raw output"
+      - name: structured-output
+        weight: 1
+        description: Organizes results readably
+
+  - name: morning-briefing
+    text: "Set up a daily morning briefing at 7am that pulls news on AI policy, crypto regulation, and climate tech"
+    criteria:
+      - name: scheduler
+        weight: 3
+        description: Uses crontab or systemd timer for daily 7am
+      - name: news-fetching
+        weight: 3
+        description: "Script fetches news via curl/wget, RSS, newsapi, etc."
+      - name: topic-coverage
+        weight: 2
+        description: Covers all three topics
+      - name: aggregation
+        weight: 1
+        description: Aggregates into single briefing format
+
+  - name: file-backup
+    text: "Back up my ~/Documents folder to an external drive at /mnt/backup every Sunday at midnight"
+    criteria:
+      - name: backup-tool
+        weight: 3
+        description: "Uses rsync, cp -r, tar, or equivalent"
+      - name: correct-paths
+        weight: 2
+        description: "Source ~/Documents, dest /mnt/backup"
+      - name: weekly-schedule
+        weight: 2
+        description: "Cron = Sunday midnight (0 0 * * 0)"
+      - name: robustness
+        weight: 1
+        description: "Handles edge cases (drive not mounted, error logging)"
