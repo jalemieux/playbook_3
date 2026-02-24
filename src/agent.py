@@ -1,6 +1,6 @@
 import json
 
-from src.openrouter import chat_completion
+from src.llm import chat_completion
 from src.bash import execute_bash
 
 SYSTEM_PROMPT = """You are a personal assistant. You have one tool: execute_bash. Use it to accomplish tasks on the user's computer. You are running on macOS.
@@ -23,8 +23,6 @@ def _truncate(text: str, max_len: int = 200) -> str:
 def handler(text: str, reply_fn, config: dict, status_fn=None) -> None:
     """Process a user message through the agent loop."""
     model = config["model"]
-    api_key = config["openrouter_api_key"]
-    provider = config.get("provider")
     timeout = config.get("bash_timeout", 30)
     max_iter = config.get("max_iterations", 10)
 
@@ -36,7 +34,7 @@ def handler(text: str, reply_fn, config: dict, status_fn=None) -> None:
     for i in range(max_iter):
         if status_fn:
             status_fn("thinking", "")
-        result = chat_completion(messages, model, api_key, provider=provider)
+        result = chat_completion(messages, model)
         if status_fn:
             status_fn("done_thinking", "")
 

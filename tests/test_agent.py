@@ -6,7 +6,6 @@ from src.agent import handler
 # Reusable config for tests
 TEST_CONFIG = {
     "model": "anthropic/claude-sonnet-4",
-    "openrouter_api_key": "sk-test",
     "bash_timeout": 5,
     "max_iterations": 10,
 }
