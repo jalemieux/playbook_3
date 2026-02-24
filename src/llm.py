@@ -19,15 +19,18 @@ TOOL_SCHEMA = {
 }
 
 
-def chat_completion(messages: list[dict], model: str) -> dict:
-    """Call LLM via LiteLLM with execute_bash tool.
+def chat_completion(messages: list[dict], model: str, tools: list[dict] | None = None) -> dict:
+    """Call LLM via LiteLLM with tool-use support.
 
     Returns dict with 'content' (str|None) and 'tool_calls' (list[dict]|None).
     """
+    if tools is None:
+        tools = [TOOL_SCHEMA]
+
     response = litellm.completion(
         model=model,
         messages=messages,
-        tools=[TOOL_SCHEMA],
+        tools=tools,
         timeout=60,
     )
     message = response.choices[0].message

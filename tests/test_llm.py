@@ -61,3 +61,28 @@ def test_tool_schema_has_execute_bash():
     assert TOOL_SCHEMA["function"]["name"] == "execute_bash"
     params = TOOL_SCHEMA["function"]["parameters"]
     assert "command" in params["properties"]
+
+
+def test_chat_completion_custom_tools():
+    """chat_completion accepts a custom tools list instead of default TOOL_SCHEMA."""
+    custom_tool = {
+        "type": "function",
+        "function": {
+            "name": "execute_task",
+            "description": "Execute a task.",
+            "parameters": {
+                "type": "object",
+                "properties": {"intent": {"type": "string"}},
+                "required": ["intent"],
+            },
+        },
+    }
+    mock_resp = _mock_litellm_response(content="ok")
+    with patch("src.llm.litellm.completion", return_value=mock_resp) as mock_call:
+        chat_completion(
+            messages=[{"role": "user", "content": "test"}],
+            model="anthropic/claude-sonnet-4",
+            tools=[custom_tool],
+        )
+    call_kwargs = mock_call.call_args
+    assert call_kwargs.kwargs["tools"] == [custom_tool]
