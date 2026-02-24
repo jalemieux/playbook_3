@@ -16,6 +16,22 @@ export OPENROUTER_API_KEY=your-key-here
 python main.py --channel cli
 ```
 
+### Docker
+
+```bash
+# Build and run with CLI channel (default)
+docker build -t playbook_3 .
+docker run -it --env-file .env playbook_3
+
+# Run with a specific channel
+docker run -it --env-file .env -e CHANNEL=telegram playbook_3
+
+# Via docker compose
+docker compose run agent
+```
+
+The `CHANNEL` env var controls which channel starts (`cli`, `telegram`, `gmail`, `all`). The `--channel` flag takes precedence if provided.
+
 ## Channels
 
 ```bash
