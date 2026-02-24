@@ -190,14 +190,47 @@ def judge_all(results: list[dict], prompts: list[dict], judge_model: str) -> lis
 
 
 def write_report(results: list[dict], output_path: Path) -> None:
-    """Write a markdown comparison report."""
+    """Write a markdown comparison report with summary table and detail."""
     lines = [f"# Eval Results — {datetime.now().strftime('%Y-%m-%d %H:%M')}\n"]
+
+    # Summary table
+    if results and results[0]["model_results"]:
+        model_names = [mr["model_name"] for mr in results[0]["model_results"]]
+        prompt_names = [r["prompt_name"] for r in results]
+
+        lines.append("## Summary\n")
+        header = "| Model | " + " | ".join(prompt_names) + " | Avg |"
+        separator = "|---" + "|---" * len(prompt_names) + "|---|"
+        lines.append(header)
+        lines.append(separator)
+
+        for model_name in model_names:
+            scores = []
+            for entry in results:
+                mr = next((m for m in entry["model_results"] if m["model_name"] == model_name), None)
+                score = mr.get("weighted_score", 0.0) if mr else 0.0
+                scores.append(score)
+            avg = sum(scores) / len(scores) if scores else 0.0
+            row = f"| {model_name} | " + " | ".join(f"{s:.2f}" for s in scores) + f" | {avg:.2f} |"
+            lines.append(row)
+        lines.append("")
+
+    # Per-prompt detail
     for entry in results:
         lines.append(f"## \"{entry['prompt_text']}\"\n")
         for mr in entry["model_results"]:
-            lines.append(f"### {mr['model_name']} ({mr['elapsed']:.1f}s)\n")
-            lines.append(f"{mr['response']}\n")
+            score_str = f" — Score: {mr['weighted_score']:.2f}" if "weighted_score" in mr else ""
+            lines.append(f"### {mr['model_name']}{score_str} ({mr['elapsed']:.1f}s)\n")
+
+            if "scores" in mr:
+                lines.append("**Criteria:**")
+                for cname, cdata in mr["scores"].items():
+                    lines.append(f"- {cname}: {cdata['score']:.1f} — {cdata['reasoning']}")
+                lines.append("")
+
+            lines.append(f"**Response:**\n{mr['formatted']}\n")
         lines.append("---\n")
+
     Path(output_path).write_text("\n".join(lines))
 
 

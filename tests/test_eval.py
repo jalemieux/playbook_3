@@ -87,15 +87,24 @@ def test_run_single_error():
 
 
 def test_write_report(tmp_path):
-    """write_report generates markdown with all results."""
+    """write_report generates markdown with summary table and per-prompt detail."""
     from eval import write_report
+
     results = [
         {
-            "prompt_name": "greeting",
-            "prompt_text": "Hello",
+            "prompt_name": "test-prompt",
+            "prompt_text": "Do something",
             "model_results": [
-                {"model_name": "model-a", "response": "Hi there!", "elapsed": 1.5},
-                {"model_name": "model-b", "response": "Hey!", "elapsed": 2.0},
+                {
+                    "model_name": "model-a",
+                    "result": {"content": "Done", "tool_calls": None},
+                    "formatted": "Done",
+                    "elapsed": 1.5,
+                    "scores": {
+                        "did-it": {"score": 1.0, "reasoning": "Yes"},
+                    },
+                    "weighted_score": 0.85,
+                },
             ],
         }
     ]
@@ -103,10 +112,12 @@ def test_write_report(tmp_path):
     write_report(results, output)
     text = output.read_text()
     assert "# Eval Results" in text
-    assert "Hello" in text
+    assert "Summary" in text
     assert "model-a" in text
-    assert "Hi there!" in text
+    assert "0.85" in text
+    assert "did-it" in text
     assert "1.5s" in text
+    assert "Done" in text
 
 
 def test_format_response_text_only():
