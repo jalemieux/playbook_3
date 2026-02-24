@@ -1,0 +1,6 @@
+model: "anthropic/claude-sonnet-4"
+openrouter_api_key: ${OPENROUTER_API_KEY}
+telegram_bot_token: ${TELEGRAM_BOT_TOKEN}
+gmail_credentials_path: ./credentials.json
+bash_timeout: 30
+max_iterations: 10
