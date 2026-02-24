@@ -21,15 +21,6 @@ def test_load_eval_config(tmp_path):
     assert cfg["prompts"][0]["text"] == "Hello"
 
 
-def test_build_agent_config():
-    """build_agent_config merges model entry into base config."""
-    from eval import build_agent_config
-    base = {"bash_timeout": 30, "max_iterations": 10}
-    model_entry = {"name": "test-model", "model": "test/model-1"}
-    result = build_agent_config(model_entry, base)
-    assert result["model"] == "test/model-1"
-    assert result["bash_timeout"] == 30
-
 
 def test_run_single():
     """run_single makes a single-shot LiteLLM call and returns structured result."""

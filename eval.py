@@ -10,8 +10,6 @@ from pathlib import Path
 import litellm
 import yaml
 
-from src.agent import handler
-from src.config import load_config
 from src.llm import TOOL_SCHEMA
 
 
@@ -42,10 +40,6 @@ When you receive a message:
 
 Keep replies short and direct."""
 
-
-def build_agent_config(model_entry: dict, base_config: dict) -> dict:
-    """Merge a model entry into the base config."""
-    return {**base_config, "model": model_entry["model"]}
 
 
 def run_single(prompt_text: str, model: str) -> tuple[dict, float]:
