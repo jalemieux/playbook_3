@@ -1,0 +1,11 @@
+models:
+  - name: claude-sonnet
+    model: anthropic/claude-sonnet-4
+  - name: kimi-k2
+    model: moonshotai/kimi-k2
+
+prompts:
+  - name: list-python-files
+    text: "List all Python files in the current directory"
+  - name: word-count
+    text: "Count the number of lines in main.py"
