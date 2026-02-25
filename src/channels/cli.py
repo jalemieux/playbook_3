@@ -18,6 +18,8 @@ _verbose = False
 
 def _format_call(text: str, max_len: int = 80) -> str:
     """Collapse multiline commands to a single truncated line."""
+    if not text:
+        return "?"
     one_line = text.replace("\n", " ").replace("  ", " ")
     if len(one_line) <= max_len:
         return one_line

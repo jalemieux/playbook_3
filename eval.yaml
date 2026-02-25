@@ -8,8 +8,6 @@ models:
     model: openai/gpt-4o
   - name: gemini-2.5-flash
     model: gemini/gemini-2.5-flash
-  - name: minimax-01
-    model: openrouter/minimax/minimax-01
   - name: kimi-k2
     model: openrouter/moonshotai/kimi-k2
   - name: claude-haiku-4.5
@@ -82,18 +80,18 @@ prompts:
         weight: 1
         description: Aggregates into single briefing format
 
-  - name: file-backup
-    text: "Back up my ~/Documents folder to an external drive at /mnt/backup every Sunday at midnight"
+  - name: largest-files
+    text: "Find the 10 largest files on this system and show their sizes"
     criteria:
-      - name: backup-tool
+      - name: uses-find-or-du
         weight: 3
-        description: "Uses rsync, cp -r, tar, or equivalent"
-      - name: correct-paths
+        description: "Uses find, du, or ls to locate files by size"
+      - name: sorts-by-size
+        weight: 3
+        description: "Sorts results by size descending to show largest first"
+      - name: limits-to-10
         weight: 2
-        description: "Source ~/Documents, dest /mnt/backup"
-      - name: weekly-schedule
-        weight: 2
-        description: "Cron = Sunday midnight (0 0 * * 0)"
-      - name: robustness
+        description: "Limits output to exactly 10 results (head -10 or equivalent)"
+      - name: human-readable
         weight: 1
-        description: "Handles edge cases (drive not mounted, error logging)"
+        description: "Shows sizes in human-readable format (MB/GB, not raw bytes)"

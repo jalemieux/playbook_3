@@ -1,4 +1,4 @@
-model: anthropic/claude-sonnet-4-6
+agent_model: anthropic/claude-haiku-4-5
 orchestrator_model: anthropic/claude-sonnet-4-6
 orchestrator_max_iterations: 5
 telegram_bot_token: ${TELEGRAM_BOT_TOKEN}

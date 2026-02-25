@@ -1,4 +1,10 @@
+import logging
+
 import litellm
+
+# Suppress verbose LiteLLM logging
+litellm.suppress_debug_info = True
+logging.getLogger("LiteLLM").setLevel(logging.WARNING)
 
 TOOL_SCHEMA = {
     "type": "function",
