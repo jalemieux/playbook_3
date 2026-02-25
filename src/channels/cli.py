@@ -85,7 +85,10 @@ def _make_status_fn():
                 print(f"  {DIM}│{RESET} {DIM}╭─{RESET} {YELLOW}▶ {call}{RESET} {DIM}→ {summary}{RESET}")
                 _status._pending_call = None
         elif kind == "sub_agent_call":
-            print(f"  {DIM}╭─{RESET} {YELLOW}▶ Sub-Agent({RESET}\"{_format_call(text)}\"{YELLOW}){RESET}")
+            if _verbose:
+                print(f"  {DIM}╭─{RESET} {YELLOW}▶ Sub-Agent({RESET}\"{text}\"{YELLOW}){RESET}")
+            else:
+                print(f"  {DIM}╭─{RESET} {YELLOW}▶ Sub-Agent({RESET}\"{_format_call(text)}\"{YELLOW}){RESET}")
         elif kind == "sub_agent_result":
             lines = text.splitlines()
             n = len(lines)
