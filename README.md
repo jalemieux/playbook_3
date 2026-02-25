@@ -11,7 +11,7 @@ Prompt bloat degrades cognition. This project strips agent architecture to first
 
 - **Orchestrator layer** — conversation-aware; maintains session history, delegates tasks to a stateless agent
 - **Stateless agent** — executes tasks via bash, returns results
-- **Multi-channel** — CLI, Telegram, Gmail with identical interface
+- **Multi-channel** — CLI, Telegram (with user whitelist), Gmail with identical interface
 - **Multi-model** — swap models via config (Anthropic, OpenAI, Minimax, etc.)
 - **Eval framework** — compare model performance across prompts
 - **Session management** — `/clear` to reset conversation in CLI
@@ -110,7 +110,7 @@ Results are saved as timestamped markdown in `results/`.
 pytest tests/ -v
 ```
 
-30 tests across 6 modules (config, bash, llm, agent, orchestrator, eval).
+36 tests across 6 modules (config, bash, llm, agent, orchestrator, eval).
 
 ## Architecture
 

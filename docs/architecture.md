@@ -10,9 +10,9 @@
 | **Bash** | `src/bash.py` | Sandboxed bash execution with timeout |
 | **Config** | `src/config.py` | YAML config loader with env var interpolation |
 | **CLI Channel** | `src/channels/cli.py` | Interactive terminal with spinner, verbose mode, `/clear` |
-| **Telegram Channel** | `src/channels/telegram.py` | Telegram bot via python-telegram-bot |
+| **Telegram Channel** | `src/channels/telegram.py` | Telegram bot via python-telegram-bot; user whitelist support |
 | **Gmail Channel** | `src/channels/gmail.py` | Gmail polling via Google API |
-| **Eval** | `src/eval.py` | Multi-model evaluation framework |
+| **Eval** | `src/eval.py` | Multi-model evaluation with LLM-as-judge scoring |
 
 ## Data Flow
 
@@ -72,6 +72,9 @@ Channels import `handler` from `src.orchestrator` (previously from `src.agent`).
 | `orchestrator_max_iterations` | `5` | Max orchestrator tool-call loops |
 | `bash_timeout` | `30` | Bash command timeout (seconds) |
 | `max_iterations` | `10` | Max agent tool-call loops |
+| `telegram_bot_token` | — | Telegram bot API token |
+| `telegram_allowed_users` | `""` (allow all) | Comma-separated Telegram user IDs for whitelist |
+| `gmail_credentials_path` | `./credentials.json` | Path to Gmail OAuth credentials |
 
 ---
 
