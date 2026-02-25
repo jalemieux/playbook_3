@@ -7,9 +7,14 @@ import time
 from datetime import datetime
 from pathlib import Path
 
+import sys
+from pathlib import Path as _Path
+
 import litellm
 import yaml
 
+# Allow imports from project root
+sys.path.insert(0, str(_Path(__file__).resolve().parent.parent))
 from src.llm import TOOL_SCHEMA
 
 
@@ -185,7 +190,8 @@ def judge_all(results: list[dict], prompts: list[dict], judge_model: str) -> lis
 
 def write_report(results: list[dict], output_path: Path) -> None:
     """Write a markdown comparison report with summary table and detail."""
-    lines = [f"# Eval Results — {datetime.now().strftime('%Y-%m-%d %H:%M')}\n"]
+    lines = [f"# Agent Eval Results — {datetime.now().strftime('%Y-%m-%d %H:%M')}\n"]
+    lines.append("*Single-shot agent evaluation (no orchestrator, no agentic loop)*\n")
 
     # Summary table
     if results and results[0]["model_results"]:
@@ -229,14 +235,16 @@ def write_report(results: list[dict], output_path: Path) -> None:
 
 
 def main():
+    eval_dir = Path(__file__).resolve().parent
+
     parser = argparse.ArgumentParser(description="Run eval across models")
-    parser.add_argument("--config", default="eval.yaml", help="Eval config YAML")
+    parser.add_argument("--config", default=str(eval_dir / "eval.yaml"), help="Eval config YAML")
     parser.add_argument("--output", default=None, help="Output markdown path")
     args = parser.parse_args()
 
     eval_cfg = load_eval_config(Path(args.config))
 
-    output_path = args.output or f"results/{datetime.now().strftime('%Y-%m-%dT%H-%M')}.md"
+    output_path = args.output or str(eval_dir / f"results/{datetime.now().strftime('%Y-%m-%dT%H-%M')}.md")
     Path(output_path).parent.mkdir(parents=True, exist_ok=True)
 
     models = eval_cfg["models"]

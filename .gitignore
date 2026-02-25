@@ -4,4 +4,4 @@ token.json
 __pycache__/
 .venv/
 .worktrees/
-results/
+eval/results/
