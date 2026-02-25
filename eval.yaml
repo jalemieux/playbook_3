@@ -2,18 +2,18 @@ judge:
   model: anthropic/claude-sonnet-4-6
 
 models:
-  - name: claude-sonnet-4
+  - name: claude-sonnet-4-6
     model: anthropic/claude-sonnet-4-6
-  - name: gpt-4o
-    model: openai/gpt-4o
+  - name: gpt-4.1
+    model: openai/gpt-4.1
   - name: gemini-2.5-flash
     model: gemini/gemini-2.5-flash
   - name: kimi-k2
     model: openrouter/moonshotai/kimi-k2
   - name: claude-haiku-4.5
     model: anthropic/claude-haiku-4-5-20251001
-  - name: gpt-4o-mini
-    model: openai/gpt-4o-mini
+  - name: gpt-4.1-mini
+    model: openai/gpt-4.1-mini
 
 prompts:
   - name: schedule-reminder
