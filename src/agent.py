@@ -22,7 +22,7 @@ def _truncate(text: str, max_len: int = 200) -> str:
 
 def run(text: str, config: dict, status_fn=None) -> str:
     """Execute a task through the agent loop. Returns the final response text."""
-    model = config["model"]
+    model = config["agent_model"]
     timeout = config.get("bash_timeout", 30)
     max_iter = config.get("max_iterations", 10)
 

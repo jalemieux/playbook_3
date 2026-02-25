@@ -4,7 +4,7 @@ from unittest.mock import patch, MagicMock
 from src.orchestrator import handler, conversations, EXECUTE_TASK_SCHEMA
 
 TEST_CONFIG = {
-    "model": "anthropic/claude-sonnet-4",
+    "agent_model": "anthropic/claude-sonnet-4",
     "orchestrator_model": "anthropic/claude-sonnet-4",
     "orchestrator_max_iterations": 5,
     "bash_timeout": 5,

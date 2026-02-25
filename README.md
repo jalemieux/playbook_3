@@ -59,10 +59,10 @@ python main.py                      # Telegram + Gmail together
 Edit `config.yaml` to swap models:
 
 ```yaml
-model: "anthropic/claude-sonnet-4"   # Claude
-model: "moonshotai/kimi-k2"          # Kimi K2
-model: "minimax/minimax-m1"          # Minimax
-model: "openai/o3"                   # OpenAI o3
+agent_model: "anthropic/claude-sonnet-4"   # Claude
+agent_model: "moonshotai/kimi-k2"          # Kimi K2
+agent_model: "minimax/minimax-m1"          # Minimax
+agent_model: "openai/o3"                   # OpenAI o3
 ```
 
 ## Eval Framework

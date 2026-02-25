@@ -7,9 +7,9 @@ from src.config import load_config
 
 def test_load_config_reads_yaml(tmp_path):
     config_file = tmp_path / "config.yaml"
-    config_file.write_text("model: anthropic/claude-sonnet-4\nbash_timeout: 30\n")
+    config_file.write_text("agent_model: anthropic/claude-sonnet-4\nbash_timeout: 30\n")
     cfg = load_config(config_file)
-    assert cfg["model"] == "anthropic/claude-sonnet-4"
+    assert cfg["agent_model"] == "anthropic/claude-sonnet-4"
     assert cfg["bash_timeout"] == 30
 
 

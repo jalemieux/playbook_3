@@ -34,7 +34,7 @@ def clear_session(session_id: str) -> None:
 
 def handler(text: str, reply_fn, config: dict, session_id: str = "default", status_fn=None) -> None:
     """Process a user message through the orchestrator."""
-    model = config.get("orchestrator_model", config["model"])
+    model = config.get("orchestrator_model", config["agent_model"])
     max_iter = config.get("orchestrator_max_iterations", 5)
 
     # Get or create conversation history

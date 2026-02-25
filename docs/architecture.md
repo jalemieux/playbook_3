@@ -67,8 +67,8 @@ Channels import `handler` from `src.orchestrator` (previously from `src.agent`).
 
 | Key | Default | Description |
 |-----|---------|-------------|
-| `model` | — | Model for agent (task execution) |
-| `orchestrator_model` | falls back to `model` | Model for orchestrator (conversation) |
+| `agent_model` | — | Model for agent (task execution) |
+| `orchestrator_model` | falls back to `agent_model` | Model for orchestrator (conversation) |
 | `orchestrator_max_iterations` | `5` | Max orchestrator tool-call loops |
 | `bash_timeout` | `30` | Bash command timeout (seconds) |
 | `max_iterations` | `10` | Max agent tool-call loops |

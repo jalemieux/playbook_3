@@ -5,7 +5,7 @@ from src.agent import handler, run
 
 # Reusable config for tests
 TEST_CONFIG = {
-    "model": "anthropic/claude-sonnet-4",
+    "agent_model": "anthropic/claude-sonnet-4",
     "bash_timeout": 5,
     "max_iterations": 10,
 }

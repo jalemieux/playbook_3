@@ -96,7 +96,7 @@ def run_cli(config: dict) -> None:
 
     mode = f"{DIM}collapsed{RESET}" if not _verbose else f"{DIM}expanded{RESET}"
     print(f"{BOLD}Agent CLI{RESET}  {DIM}ctrl+e: toggle tool output | /clear: reset | 'quit' to exit{RESET}")
-    print(f"  {DIM}model: {RESET}{config.get('model', 'unknown')}")
+    print(f"  {DIM}agent model: {RESET}{config.get('agent_model', 'unknown')}")
     print(f"  {DIM}tool output: {RESET}{mode}")
     print()
 
