@@ -12,7 +12,12 @@ async def _on_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
     config = context.bot_data["config"]
 
     raw = config.get("telegram_allowed_users", "")
-    allowed_users = {int(uid) for uid in raw.split(",") if uid.strip()} if raw else set()
+    if isinstance(raw, int):
+        allowed_users = {raw}
+    elif raw:
+        allowed_users = {int(uid) for uid in str(raw).split(",") if uid.strip()}
+    else:
+        allowed_users = set()
     if allowed_users and update.effective_user.id not in allowed_users:
         logger.warning("Unauthorized Telegram user: %s (id=%s)", update.effective_user.username, update.effective_user.id)
         return
@@ -21,17 +26,14 @@ async def _on_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
     if not text:
         return
 
+    # Capture the running loop before entering the thread
+    import asyncio
+    loop = asyncio.get_running_loop()
+
     def reply_fn(response: str):
-        # Schedule the async reply from sync context
-        import asyncio
-        asyncio.get_event_loop().call_soon_threadsafe(
-            asyncio.ensure_future,
-            update.message.reply_text(response),
-        )
+        loop.call_soon_threadsafe(asyncio.ensure_future, update.message.reply_text(response))
 
     # Run agent in thread to avoid blocking the event loop
-    import asyncio
-    loop = asyncio.get_event_loop()
     await loop.run_in_executor(None, handler, text, reply_fn, config)
 
 
