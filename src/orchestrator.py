@@ -71,12 +71,12 @@ def handler(text: str, reply_fn, config: dict, session_id: str = "default", stat
             intent = args["intent"]
 
             if status_fn:
-                status_fn("tool_call", f'Task("{intent}")')
+                status_fn("sub_agent_call", intent)
 
             task_result = agent_run(intent, config, status_fn)
 
             if status_fn:
-                status_fn("tool_result", task_result[:200])
+                status_fn("sub_agent_result", task_result[:200])
 
             tool_msg = {
                 "role": "tool",

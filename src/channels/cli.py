@@ -76,14 +76,21 @@ def _make_status_fn():
             if _verbose:
                 for i, line in enumerate(lines):
                     connector = "╰─" if i == len(lines) - 1 else "│ "
-                    print(f"  {DIM}{connector} {line}{RESET}")
+                    print(f"  {DIM}│ {connector} {line}{RESET}")
                 print()
             else:
                 call = _format_call(getattr(_status, "_pending_call", "?"))
                 n = len(lines)
                 summary = f"{n} line{'s' if n != 1 else ''}"
-                print(f"  {DIM}╭─{RESET} {YELLOW}▶ {call}{RESET} {DIM}→ {summary}{RESET}")
+                print(f"  {DIM}│{RESET} {DIM}╭─{RESET} {YELLOW}▶ {call}{RESET} {DIM}→ {summary}{RESET}")
                 _status._pending_call = None
+        elif kind == "sub_agent_call":
+            print(f"  {DIM}╭─{RESET} {YELLOW}▶ Sub-Agent({RESET}\"{_format_call(text)}\"{YELLOW}){RESET}")
+        elif kind == "sub_agent_result":
+            lines = text.splitlines()
+            n = len(lines)
+            summary = f"{n} line{'s' if n != 1 else ''}"
+            print(f"  {DIM}╰─ → {summary}{RESET}")
     return _status
 
 
@@ -98,8 +105,9 @@ def run_cli(config: dict) -> None:
 
     mode = f"{DIM}collapsed{RESET}" if not _verbose else f"{DIM}expanded{RESET}"
     print(f"{BOLD}Agent CLI{RESET}  {DIM}ctrl+e: toggle tool output | /clear: reset | 'quit' to exit{RESET}")
-    print(f"  {DIM}agent model: {RESET}{config.get('agent_model', 'unknown')}")
-    print(f"  {DIM}tool output: {RESET}{mode}")
+    print(f"  {DIM}orchestrator: {RESET}{config.get('orchestrator_model', config.get('agent_model', 'unknown'))}")
+    print(f"  {DIM}agent:        {RESET}{config.get('agent_model', 'unknown')}")
+    print(f"  {DIM}tool output:  {RESET}{mode}")
     print()
 
     while True:
