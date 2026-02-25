@@ -1,11 +1,11 @@
 <p align="center">
-  <img src="docs/images/hero.png" alt="playbook_3 — Simplicity. Agency. Power." width="100%">
+  <img src="docs/images/hero.png?v=2" alt="playbook_3 — Simplicity. Agency. Power." width="100%">
 </p>
 
 <p align="center"><strong>Can a ~50-word system prompt and one tool produce genuine agency?</strong></p>
 
 <p align="center">
-  <img src="docs/demo.gif" alt="CLI Demo" width="600">
+  <img src="docs/demo.gif?v=2" alt="CLI Demo" width="600">
 </p>
 
 ## Architecture
