@@ -5,7 +5,7 @@
 <p align="center"><strong>Can a ~50-word system prompt and one tool produce genuine agency?</strong></p>
 
 <p align="center">
-  <img src="./demo.gif" alt="CLI Demo" width="600">
+  <img src="docs/demo.gif" alt="CLI Demo" width="600">
 </p>
 
 ## Architecture
