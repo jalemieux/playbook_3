@@ -5,3 +5,5 @@ __pycache__/
 .venv/
 .worktrees/
 eval/results/
+.DS_Store
+docs/.DS_Store
