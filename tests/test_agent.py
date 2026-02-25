@@ -1,7 +1,7 @@
 import json
 from unittest.mock import patch, MagicMock, call
 
-from src.agent import handler
+from src.agent import handler, run
 
 # Reusable config for tests
 TEST_CONFIG = {
@@ -78,3 +78,30 @@ def test_handler_bash_timeout():
         ]
         handler("run sleep 999", replies.append, TEST_CONFIG)
     assert replies == ["That command timed out."]
+
+
+def test_run_returns_text_response():
+    """run() returns the LLM response as a string."""
+    with patch("src.agent.chat_completion") as mock_llm:
+        mock_llm.return_value = {"content": "Hello!", "tool_calls": None}
+        result = run("Hi there", TEST_CONFIG)
+    assert result == "Hello!"
+
+
+def test_run_tool_then_text():
+    """run() executes tools and returns final text."""
+    with patch("src.agent.chat_completion") as mock_llm, \
+         patch("src.agent.execute_bash", return_value="file1.txt\n"):
+        mock_llm.side_effect = [
+            {
+                "content": None,
+                "tool_calls": [{
+                    "id": "call_1",
+                    "type": "function",
+                    "function": {"name": "execute_bash", "arguments": '{"command": "ls"}'},
+                }],
+            },
+            {"content": "Found file1.txt.", "tool_calls": None},
+        ]
+        result = run("List files", TEST_CONFIG)
+    assert result == "Found file1.txt."

@@ -1,4 +1,6 @@
 model: anthropic/claude-sonnet-4-6
+orchestrator_model: anthropic/claude-sonnet-4-6
+orchestrator_max_iterations: 5
 telegram_bot_token: ${TELEGRAM_BOT_TOKEN}
 telegram_allowed_users: ${TELEGRAM_ALLOWED_USERS}  # Comma-separated user IDs. Empty = allow all.
 gmail_credentials_path: ./credentials.json

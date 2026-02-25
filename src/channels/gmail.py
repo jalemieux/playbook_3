@@ -8,7 +8,7 @@ from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
 
-from src.agent import handler
+from src.orchestrator import handler
 
 logger = logging.getLogger(__name__)
 
@@ -92,7 +92,7 @@ def start_gmail(config: dict, poll_interval: int = 60) -> None:
                 def reply_fn(response, _sender=sender):
                     _send_reply(service, _sender, "Agent Reply", response)
 
-                handler(text, reply_fn, config)
+                handler(text, reply_fn, config, session_id=msg_id)
                 _mark_as_read(service, msg_id)
         except Exception:
             logger.exception("Gmail polling error")

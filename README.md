@@ -7,6 +7,15 @@ A minimal agent that tests whether a smart model + clear intent + one tool = gen
 Prompt bloat degrades cognition. This project strips agent architecture to first principles:
 ~50-word system prompt, one tool (`execute_bash`), no memory, no state.
 
+## Features
+
+- **Orchestrator layer** — conversation-aware; maintains session history, delegates tasks to a stateless agent
+- **Stateless agent** — executes tasks via bash, returns results
+- **Multi-channel** — CLI, Telegram, Gmail with identical interface
+- **Multi-model** — swap models via config (Anthropic, OpenAI, Minimax, etc.)
+- **Eval framework** — compare model performance across prompts
+- **Session management** — `/clear` to reset conversation in CLI
+
 ## Quick Start
 
 ```bash
@@ -101,8 +110,10 @@ Results are saved as timestamped markdown in `results/`.
 pytest tests/ -v
 ```
 
-26 tests across 5 modules (config, bash, llm, agent, eval).
+30 tests across 6 modules (config, bash, llm, agent, orchestrator, eval).
 
 ## Architecture
 
-See [docs/plans/2026-02-23-minimal-agent-design.md](docs/plans/2026-02-23-minimal-agent-design.md) for the full design document.
+See [docs/architecture.md](docs/architecture.md) for component overview, data flow, and design decisions.
+
+See [docs/plans/2026-02-23-minimal-agent-design.md](docs/plans/2026-02-23-minimal-agent-design.md) for the original design document.

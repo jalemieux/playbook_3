@@ -3,7 +3,7 @@ import sys
 import threading
 import time
 
-from src.agent import handler
+from src.orchestrator import handler, clear_session
 
 DIM = "\033[2m"
 BOLD = "\033[1m"
@@ -95,7 +95,8 @@ def run_cli(config: dict) -> None:
     global _verbose
 
     mode = f"{DIM}collapsed{RESET}" if not _verbose else f"{DIM}expanded{RESET}"
-    print(f"{BOLD}Agent CLI{RESET}  {DIM}ctrl+e: toggle tool output | 'quit' to exit{RESET}")
+    print(f"{BOLD}Agent CLI{RESET}  {DIM}ctrl+e: toggle tool output | /clear: reset | 'quit' to exit{RESET}")
+    print(f"  {DIM}model: {RESET}{config.get('model', 'unknown')}")
     print(f"  {DIM}tool output: {RESET}{mode}")
     print()
 
@@ -118,4 +119,10 @@ def run_cli(config: dict) -> None:
             print()
             continue
 
-        handler(text, _reply, config, status_fn=_make_status_fn())
+        if stripped in ("/clear", "/reset"):
+            clear_session("cli")
+            print(f"  {DIM}conversation cleared{RESET}")
+            print()
+            continue
+
+        handler(text, _reply, config, session_id="cli", status_fn=_make_status_fn())
