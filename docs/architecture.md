@@ -6,13 +6,13 @@
 |-----------|------|------|
 | **Orchestrator** | `src/orchestrator.py` | Conversation-aware layer; maintains session history, delegates tasks to agent via `execute_task` tool |
 | **Agent** | `src/agent.py` | Stateless task executor; takes a text intent, runs bash tools, returns result string |
-| **LLM** | `src/llm.py` | LiteLLM wrapper; handles tool-use protocol, accepts custom tool schemas |
+| **LLM** | `src/llm.py` | LiteLLM wrapper; handles tool-use protocol, accepts custom tool schemas, suppresses debug logging |
 | **Bash** | `src/bash.py` | Sandboxed bash execution with timeout |
 | **Config** | `src/config.py` | YAML config loader with env var interpolation |
-| **CLI Channel** | `src/channels/cli.py` | Interactive terminal with spinner, verbose mode, `/clear` |
+| **CLI Channel** | `src/channels/cli.py` | Interactive terminal with spinner, collapsed/expanded tool output (ctrl+e), sub-agent call nesting, `/clear` |
 | **Telegram Channel** | `src/channels/telegram.py` | Telegram bot via python-telegram-bot; user whitelist support |
 | **Gmail Channel** | `src/channels/gmail.py` | Gmail polling via Google API |
-| **Eval** | `src/eval.py` | Multi-model evaluation with LLM-as-judge scoring |
+| **Eval** | `src/eval.py` | Multi-model evaluation with LLM-as-judge scoring (6 models × 5 prompts) |
 
 ## Data Flow
 
@@ -81,3 +81,4 @@ Channels import `handler` from `src.orchestrator` (previously from `src.agent`).
 ## Changelog
 
 - **2026-02-24**: Added orchestrator layer with conversation history, execute_task tool, session management
+- **2026-02-24**: Renamed config `model` → `agent_model`; CLI shows both models at startup with ctrl+e collapsed/expanded toggle and sub-agent call nesting; suppressed LiteLLM debug logging; eval swapped gpt-4o for gpt-4.1 models, replaced file-backup prompt with largest-files

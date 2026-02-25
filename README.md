@@ -14,6 +14,7 @@ Prompt bloat degrades cognition. This project strips agent architecture to first
 - **Multi-channel** — CLI, Telegram (with user whitelist), Gmail with identical interface
 - **Multi-model** — swap models via config (Anthropic, OpenAI, Minimax, etc.)
 - **Eval framework** — compare model performance across prompts
+- **Rich CLI** — shows both models at startup, ctrl+e toggles collapsed/expanded tool output, sub-agent call nesting
 - **Session management** — `/clear` to reset conversation in CLI
 
 ## Quick Start
@@ -70,7 +71,7 @@ agent_model: "openai/o3"                   # OpenAI o3
 Compare model performance across prompts with LLM-as-judge scoring:
 
 ```bash
-# Run eval with default config (7 models × 5 prompts):
+# Run eval with default config (6 models × 5 prompts):
 python eval.py
 
 # Custom config and output:
@@ -90,8 +91,10 @@ judge:
   model: anthropic/claude-sonnet-4-6
 
 models:
-  - name: claude-sonnet-4
+  - name: claude-sonnet-4-6
     model: anthropic/claude-sonnet-4-6
+  - name: gpt-4.1
+    model: openai/gpt-4.1
 
 prompts:
   - name: schedule-reminder
@@ -102,7 +105,7 @@ prompts:
         description: Uses crontab or systemd timer
 ```
 
-Results are saved as timestamped markdown in `results/`.
+Results are saved as timestamped markdown in `docs/`. See [docs/eval-results-2026-02-24.md](docs/eval-results-2026-02-24.md) for latest results.
 
 ## Tests
 
