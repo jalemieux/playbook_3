@@ -1,8 +1,12 @@
-# playbook_3
+<p align="center">
+  <img src="docs/images/hero.png" alt="playbook_3 — Simplicity. Agency. Power." width="100%">
+</p>
 
-**Can a ~50-word system prompt and one tool produce genuine agency?**
+<p align="center"><strong>Can a ~50-word system prompt and one tool produce genuine agency?</strong></p>
 
-![CLI Demo](./demo.gif)
+<p align="center">
+  <img src="./demo.gif" alt="CLI Demo" width="600">
+</p>
 
 ## Architecture
 
