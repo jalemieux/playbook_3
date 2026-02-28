@@ -21,7 +21,7 @@ for pb3_var, standard_var in [
     ("PB3_MINIMAX_API_KEY", "MINIMAX_API_KEY"),
 ]:
     val = os.environ.get(pb3_var)
-    if val and not os.environ.get(standard_var):
+    if val:
         os.environ[standard_var] = val
 
 
