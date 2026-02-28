@@ -14,7 +14,7 @@ TEST_CONFIG = {
 def test_handler_text_response():
     """Model replies with text, no tool calls — single iteration."""
     replies = []
-    with patch("src.agent.chat_completion") as mock_llm:
+    with patch("src.agents.single.chat_completion") as mock_llm:
         mock_llm.return_value = {"content": "Hello!", "tool_calls": None}
         handler("Hi there", replies.append, TEST_CONFIG)
     assert replies == ["Hello!"]
@@ -23,8 +23,8 @@ def test_handler_text_response():
 def test_handler_tool_then_text():
     """Model calls bash, gets output, then replies with text."""
     replies = []
-    with patch("src.agent.chat_completion") as mock_llm, \
-         patch("src.agent.execute_bash", return_value="file1.txt\nfile2.txt\n") as mock_bash:
+    with patch("src.agents.single.chat_completion") as mock_llm, \
+         patch("src.agents.single.execute_bash", return_value="file1.txt\nfile2.txt\n") as mock_bash:
         mock_llm.side_effect = [
             {
                 "content": None,
@@ -53,8 +53,8 @@ def test_handler_max_iterations():
             "function": {"name": "execute_bash", "arguments": '{"command": "echo loop"}'},
         }],
     }
-    with patch("src.agent.chat_completion", return_value=tool_response), \
-         patch("src.agent.execute_bash", return_value="loop\n"):
+    with patch("src.agents.single.chat_completion", return_value=tool_response), \
+         patch("src.agents.single.execute_bash", return_value="loop\n"):
         handler("infinite loop", replies.append, config)
     assert len(replies) == 1
     assert "iteration" in replies[0].lower() or "limit" in replies[0].lower()
@@ -63,8 +63,8 @@ def test_handler_max_iterations():
 def test_handler_bash_timeout():
     """Bash timeout error is fed back to the model as tool result."""
     replies = []
-    with patch("src.agent.chat_completion") as mock_llm, \
-         patch("src.agent.execute_bash", side_effect=TimeoutError("timed out")):
+    with patch("src.agents.single.chat_completion") as mock_llm, \
+         patch("src.agents.single.execute_bash", side_effect=TimeoutError("timed out")):
         mock_llm.side_effect = [
             {
                 "content": None,
@@ -82,7 +82,7 @@ def test_handler_bash_timeout():
 
 def test_run_returns_text_response():
     """run() returns the LLM response as a string."""
-    with patch("src.agent.chat_completion") as mock_llm:
+    with patch("src.agents.single.chat_completion") as mock_llm:
         mock_llm.return_value = {"content": "Hello!", "tool_calls": None}
         result = run("Hi there", TEST_CONFIG)
     assert result == "Hello!"
@@ -90,8 +90,8 @@ def test_run_returns_text_response():
 
 def test_run_tool_then_text():
     """run() executes tools and returns final text."""
-    with patch("src.agent.chat_completion") as mock_llm, \
-         patch("src.agent.execute_bash", return_value="file1.txt\n"):
+    with patch("src.agents.single.chat_completion") as mock_llm, \
+         patch("src.agents.single.execute_bash", return_value="file1.txt\n"):
         mock_llm.side_effect = [
             {
                 "content": None,
