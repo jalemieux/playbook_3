@@ -4,6 +4,7 @@ import os
 from pathlib import Path
 
 from src.config import load_config
+from src.agents import AGENTS, DEFAULT_AGENT
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(name)s %(levelname)s %(message)s")
 logging.getLogger("httpx").setLevel(logging.WARNING)
@@ -13,10 +14,13 @@ def main():
     parser = argparse.ArgumentParser(description="Minimal agent")
     parser.add_argument("--channel", choices=["cli", "telegram", "gmail", "all"],
                         default=os.environ.get("CHANNEL", "all"))
+    parser.add_argument("--agent", choices=list(AGENTS.keys()),
+                        default=os.environ.get("AGENT", DEFAULT_AGENT))
     parser.add_argument("--config", default="config.yaml")
     args = parser.parse_args()
 
     config = load_config(Path(args.config))
+    config["agent"] = args.agent
 
     if args.channel == "cli":
         from src.channels.cli import run_cli

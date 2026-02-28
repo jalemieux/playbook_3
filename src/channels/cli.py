@@ -3,7 +3,7 @@ import sys
 import threading
 import time
 
-from src.orchestrator import handler, clear_session
+from src.agents import get_agent, get_clear_session
 
 DIM = "\033[2m"
 BOLD = "\033[1m"
@@ -106,10 +106,14 @@ def run_cli(config: dict) -> None:
     """Interactive CLI for testing the agent."""
     global _verbose
 
+    agent_name = config.get("agent", "orchestrator")
+    agent_handler = get_agent(agent_name)
+    agent_clear = get_clear_session(agent_name)
+
     mode = f"{DIM}collapsed{RESET}" if not _verbose else f"{DIM}expanded{RESET}"
     print(f"{BOLD}Agent CLI{RESET}  {DIM}ctrl+e: toggle tool output | /clear: reset | 'quit' to exit{RESET}")
-    print(f"  {DIM}orchestrator: {RESET}{config.get('orchestrator_model', config.get('agent_model', 'unknown'))}")
-    print(f"  {DIM}agent:        {RESET}{config.get('agent_model', 'unknown')}")
+    print(f"  {DIM}agent:        {RESET}{agent_name}")
+    print(f"  {DIM}model:        {RESET}{config.get('agent_model', 'unknown')}")
     print(f"  {DIM}tool output:  {RESET}{mode}")
     print()
 
@@ -124,7 +128,6 @@ def run_cli(config: dict) -> None:
         if stripped in ("quit", "exit"):
             break
 
-        # ctrl+e sends \x05 (ENQ)
         if stripped == "\x05" or stripped == "/verbose" or stripped == "/v":
             _verbose = not _verbose
             mode_label = "expanded" if _verbose else "collapsed"
@@ -133,9 +136,9 @@ def run_cli(config: dict) -> None:
             continue
 
         if stripped in ("/clear", "/reset"):
-            clear_session("cli")
+            agent_clear("cli")
             print(f"  {DIM}conversation cleared{RESET}")
             print()
             continue
 
-        handler(text, _reply, config, session_id="cli", status_fn=_make_status_fn())
+        agent_handler(text, _reply, config, session_id="cli", status_fn=_make_status_fn())
