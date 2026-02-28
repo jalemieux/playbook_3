@@ -21,10 +21,10 @@ def test_handler_text_response():
 
 
 def test_handler_tool_then_text():
-    """Model calls bash, gets output, then replies with text."""
+    """Model calls a tool, gets output, then replies with text."""
     replies = []
     with patch("src.agents.single.chat_completion") as mock_llm, \
-         patch("src.agents.single.execute_bash", return_value="file1.txt\nfile2.txt\n") as mock_bash:
+         patch("src.agents.single.execute_tool_call", return_value="file1.txt\nfile2.txt\n") as mock_exec:
         mock_llm.side_effect = [
             {
                 "content": None,
@@ -37,7 +37,7 @@ def test_handler_tool_then_text():
             {"content": "You have file1.txt and file2.txt.", "tool_calls": None},
         ]
         handler("What files do I have?", replies.append, TEST_CONFIG)
-    mock_bash.assert_called_once_with("ls", timeout=5)
+    mock_exec.assert_called_once_with("execute_bash", {"command": "ls"}, TEST_CONFIG, None)
     assert replies == ["You have file1.txt and file2.txt."]
 
 
@@ -54,17 +54,17 @@ def test_handler_max_iterations():
         }],
     }
     with patch("src.agents.single.chat_completion", return_value=tool_response), \
-         patch("src.agents.single.execute_bash", return_value="loop\n"):
+         patch("src.agents.single.execute_tool_call", return_value="loop\n"):
         handler("infinite loop", replies.append, config)
     assert len(replies) == 1
     assert "iteration" in replies[0].lower() or "limit" in replies[0].lower()
 
 
-def test_handler_bash_timeout():
-    """Bash timeout error is fed back to the model as tool result."""
+def test_handler_tool_error():
+    """Tool execution error is fed back to the model as tool result."""
     replies = []
     with patch("src.agents.single.chat_completion") as mock_llm, \
-         patch("src.agents.single.execute_bash", side_effect=TimeoutError("timed out")):
+         patch("src.agents.single.execute_tool_call", return_value="Error: timed out"):
         mock_llm.side_effect = [
             {
                 "content": None,
@@ -91,7 +91,7 @@ def test_run_returns_text_response():
 def test_run_tool_then_text():
     """run() executes tools and returns final text."""
     with patch("src.agents.single.chat_completion") as mock_llm, \
-         patch("src.agents.single.execute_bash", return_value="file1.txt\n"):
+         patch("src.agents.single.execute_tool_call", return_value="file1.txt\n"):
         mock_llm.side_effect = [
             {
                 "content": None,

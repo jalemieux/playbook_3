@@ -2,8 +2,8 @@
 import json
 
 from src.llm import chat_completion
-from src.tools import execute_tool_call
-from src.tools.bash_tool import EXECUTE_BASH_SCHEMA
+from src.tools import execute_tool_call, get_schemas_for_config
+from src.tools.utils import truncate
 
 SYSTEM_PROMPT = """You are a personal assistant. Use your tools to accomplish tasks on the user's computer.
 
@@ -12,19 +12,20 @@ When you receive a message:
 - If it's conversational, just reply.
 - If you're unsure what the user wants, ask.
 
-Keep replies short and direct."""
+## Your context: 
 
-# Tools this agent can use — add/remove schemas here
-TOOLS = [EXECUTE_BASH_SCHEMA]
+You can find your memories in ./MEMORY.md
+Your identity is in ./IDENTITY.md
+Your tasks are in ./TASKS.md
+
+## Response Protocol
+
+Before asking the user for information, ALWAYS search your context first.
+
+Keep replies short and direct."""
 
 # In-memory conversation store
 conversations: dict[str, list[dict]] = {}
-
-
-def _truncate(text: str, max_len: int = 200) -> str:
-    if len(text) <= max_len:
-        return text
-    return text[:max_len] + f"\n  … truncated ({len(text)} chars total)"
 
 
 def clear_session(session_id: str) -> None:
@@ -34,8 +35,9 @@ def clear_session(session_id: str) -> None:
 
 def handler(text: str, reply_fn, config: dict, session_id: str = "default", status_fn=None) -> None:
     """Process a user message through the base agent."""
-    model = config["agent_model"]
-    max_iter = config.get("max_iterations", 10)
+    model = config["base_model"]
+    max_iter = config.get("base_max_iterations", 10)
+    tools = get_schemas_for_config(config)
     if session_id not in conversations:
         conversations[session_id] = []
     history = conversations[session_id]
@@ -46,7 +48,7 @@ def handler(text: str, reply_fn, config: dict, session_id: str = "default", stat
     for i in range(max_iter):
         if status_fn:
             status_fn("thinking", "")
-        result = chat_completion(messages, model, tools=TOOLS)
+        result = chat_completion(messages, model, tools=tools)
         if status_fn:
             status_fn("done_thinking", "")
 
@@ -70,7 +72,7 @@ def handler(text: str, reply_fn, config: dict, session_id: str = "default", stat
             output = execute_tool_call(name, args, config, status_fn)
 
             if status_fn:
-                status_fn("tool_result", _truncate(str(output).strip()))
+                status_fn("tool_result", truncate(str(output).strip()))
 
             tool_msg = {
                 "role": "tool",
