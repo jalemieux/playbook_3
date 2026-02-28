@@ -1,7 +1,8 @@
 import json
 from unittest.mock import patch
 
-from src.agents.base import handler, clear_session, conversations, TOOLS
+from src.agents.base import handler, clear_session, conversations
+from src.tools import get_schemas_for_config
 
 TEST_CONFIG = {
     "agent_model": "anthropic/claude-sonnet-4",
@@ -24,10 +25,10 @@ def test_text_response():
 
 
 def test_tool_then_text():
-    """Base agent calls bash tool, gets output, then replies."""
+    """Base agent calls tool via dispatcher, gets output, then replies."""
     replies = []
     with patch("src.agents.base.chat_completion") as mock_llm, \
-         patch("src.agents.base.execute_bash", return_value="file1.txt\n") as mock_bash:
+         patch("src.agents.base.execute_tool_call", return_value="file1.txt\n") as mock_exec:
         mock_llm.side_effect = [
             {
                 "content": None,
@@ -40,7 +41,7 @@ def test_tool_then_text():
             {"content": "Found file1.txt.", "tool_calls": None},
         ]
         handler("List files", replies.append, TEST_CONFIG)
-    mock_bash.assert_called_once_with("ls", timeout=5)
+    mock_exec.assert_called_once_with("execute_bash", {"command": "ls"}, TEST_CONFIG, None)
     assert replies == ["Found file1.txt."]
 
 
@@ -86,23 +87,26 @@ def test_max_iterations():
         }],
     }
     with patch("src.agents.base.chat_completion", return_value=tool_response), \
-         patch("src.agents.base.execute_bash", return_value="loop\n"):
+         patch("src.agents.base.execute_tool_call", return_value="loop\n"):
         handler("loop", replies.append, config)
     assert len(replies) == 1
     assert "limit" in replies[0].lower()
 
 
-def test_tools_list_contains_bash():
-    """TOOLS list includes bash schema."""
-    names = [t["function"]["name"] for t in TOOLS]
+def test_uses_tools_from_config():
+    """Tools are resolved from config via get_schemas_for_config."""
+    schemas = get_schemas_for_config(TEST_CONFIG)
+    names = [s["function"]["name"] for s in schemas]
     assert "execute_bash" in names
 
 
-def test_passes_all_tools_to_llm():
-    """All tools in TOOLS are passed to chat_completion."""
+def test_passes_configured_tools_to_llm():
+    """Configured tools are passed to chat_completion."""
+    config = {**TEST_CONFIG, "agent_tool_profile": "claude_code"}
     with patch("src.agents.base.chat_completion") as mock_llm:
         mock_llm.return_value = {"content": "Ok", "tool_calls": None}
-        handler("Hi", lambda x: None, TEST_CONFIG)
-    call_args = mock_llm.call_args
-    # chat_completion(messages, model, tools=TOOLS)
-    assert call_args[1]["tools"] == TOOLS or (len(call_args[0]) >= 3 and call_args[0][2] == TOOLS)
+        handler("Hi", lambda x: None, config)
+    passed_tools = mock_llm.call_args[1]["tools"]
+    names = [t["function"]["name"] for t in passed_tools]
+    assert "Bash" in names
+    assert "Read" in names
