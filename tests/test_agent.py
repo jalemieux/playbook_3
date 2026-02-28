@@ -1,7 +1,7 @@
 import json
 from unittest.mock import patch, MagicMock, call
 
-from src.agent import handler, run
+from src.agents.single import handler, run
 
 # Reusable config for tests
 TEST_CONFIG = {

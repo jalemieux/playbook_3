@@ -1,7 +1,7 @@
 import json
 from unittest.mock import patch, MagicMock
 
-from src.orchestrator import handler, conversations, EXECUTE_TASK_SCHEMA
+from src.agents.orchestrator import handler, conversations, EXECUTE_TASK_SCHEMA
 
 TEST_CONFIG = {
     "agent_model": "anthropic/claude-sonnet-4",
@@ -93,7 +93,7 @@ def test_orchestrator_max_iterations():
 
 def test_orchestrator_clear_session():
     """clear_session removes history for a session."""
-    from src.orchestrator import clear_session
+    from src.agents.orchestrator import clear_session
     with patch("src.agents.orchestrator.chat_completion") as mock_llm:
         mock_llm.return_value = {"content": "Hi!", "tool_calls": None}
         handler("Hello", lambda x: None, TEST_CONFIG, session_id="test")

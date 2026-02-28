@@ -2,7 +2,7 @@ import logging
 from telegram import Update
 from telegram.ext import ApplicationBuilder, MessageHandler, filters, ContextTypes
 
-from src.orchestrator import handler
+from src.agents.orchestrator import handler
 
 logger = logging.getLogger(__name__)
 
