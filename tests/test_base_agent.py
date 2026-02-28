@@ -5,6 +5,8 @@ from src.agents.base import handler, clear_session, conversations, TOOLS
 
 TEST_CONFIG = {
     "agent_model": "anthropic/claude-sonnet-4",
+    "base_model": "anthropic/claude-sonnet-4",
+    "base_max_iterations": 10,
     "bash_timeout": 5,
     "max_iterations": 10,
 }
