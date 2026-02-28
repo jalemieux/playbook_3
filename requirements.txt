@@ -1,4 +1,5 @@
 litellm>=1.0
+python-dotenv>=1.0
 pyyaml>=6
 python-telegram-bot>=21
 google-api-python-client>=2.0

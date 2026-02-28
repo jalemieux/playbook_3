@@ -3,6 +3,10 @@ import logging
 import os
 from pathlib import Path
 
+from dotenv import load_dotenv
+
+load_dotenv()
+
 from src.config import load_config
 from src.agents import AGENTS, DEFAULT_AGENT
 
