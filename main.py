@@ -9,6 +9,17 @@ from src.agents import AGENTS, DEFAULT_AGENT
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(name)s %(levelname)s %(message)s")
 logging.getLogger("httpx").setLevel(logging.WARNING)
 
+# Map PB3_* env vars to the standard names LiteLLM expects
+for pb3_var, standard_var in [
+    ("PB3_ANTHROPIC_API_KEY", "ANTHROPIC_API_KEY"),
+    ("PB3_OPENAI_API_KEY", "OPENAI_API_KEY"),
+    ("PB3_GEMINI_API_KEY", "GEMINI_API_KEY"),
+    ("PB3_MINIMAX_API_KEY", "MINIMAX_API_KEY"),
+]:
+    val = os.environ.get(pb3_var)
+    if val and not os.environ.get(standard_var):
+        os.environ[standard_var] = val
+
 
 def main():
     parser = argparse.ArgumentParser(description="Minimal agent")

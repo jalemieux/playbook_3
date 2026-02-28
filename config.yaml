@@ -1,8 +1,8 @@
 agent_model: anthropic/claude-haiku-4-5
 orchestrator_model: anthropic/claude-sonnet-4-6
 orchestrator_max_iterations: 5
-telegram_bot_token: ${TELEGRAM_BOT_TOKEN}
-telegram_allowed_users: ${TELEGRAM_ALLOWED_USERS}  # Comma-separated user IDs. Empty = allow all.
+telegram_bot_token: ${PB3_TELEGRAM_BOT_TOKEN}
+telegram_allowed_users: ${PB3_TELEGRAM_ALLOWED_USERS}  # Comma-separated user IDs. Empty = allow all.
 gmail_credentials_path: ./credentials.json
 bash_timeout: 30
 max_iterations: 10
