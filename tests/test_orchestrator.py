@@ -20,7 +20,7 @@ def setup_function():
 def test_orchestrator_text_response():
     """Orchestrator replies with text when no tool call needed."""
     replies = []
-    with patch("src.orchestrator.chat_completion") as mock_llm:
+    with patch("src.agents.orchestrator.chat_completion") as mock_llm:
         mock_llm.return_value = {"content": "Hi there!", "tool_calls": None}
         handler("Hello", replies.append, TEST_CONFIG)
     assert replies == ["Hi there!"]
@@ -29,8 +29,8 @@ def test_orchestrator_text_response():
 def test_orchestrator_calls_agent():
     """Orchestrator calls execute_task, gets agent result, replies."""
     replies = []
-    with patch("src.orchestrator.chat_completion") as mock_llm, \
-         patch("src.orchestrator.agent_run", return_value="file1.txt") as mock_agent:
+    with patch("src.agents.orchestrator.chat_completion") as mock_llm, \
+         patch("src.agents.orchestrator.agent_run", return_value="file1.txt") as mock_agent:
         mock_llm.side_effect = [
             {
                 "content": None,
@@ -52,7 +52,7 @@ def test_orchestrator_calls_agent():
 
 def test_orchestrator_maintains_history():
     """Orchestrator maintains conversation history across calls."""
-    with patch("src.orchestrator.chat_completion") as mock_llm:
+    with patch("src.agents.orchestrator.chat_completion") as mock_llm:
         mock_llm.return_value = {"content": "Hi!", "tool_calls": None}
         handler("Hello", lambda x: None, TEST_CONFIG, session_id="test1")
         handler("How are you?", lambda x: None, TEST_CONFIG, session_id="test1")
@@ -61,7 +61,7 @@ def test_orchestrator_maintains_history():
 
 def test_orchestrator_separate_sessions():
     """Different session IDs maintain separate histories."""
-    with patch("src.orchestrator.chat_completion") as mock_llm:
+    with patch("src.agents.orchestrator.chat_completion") as mock_llm:
         mock_llm.return_value = {"content": "Hi!", "tool_calls": None}
         handler("Hello", lambda x: None, TEST_CONFIG, session_id="a")
         handler("Hello", lambda x: None, TEST_CONFIG, session_id="b")
@@ -84,8 +84,8 @@ def test_orchestrator_max_iterations():
             },
         }],
     }
-    with patch("src.orchestrator.chat_completion", return_value=tool_response), \
-         patch("src.orchestrator.agent_run", return_value="result"):
+    with patch("src.agents.orchestrator.chat_completion", return_value=tool_response), \
+         patch("src.agents.orchestrator.agent_run", return_value="result"):
         handler("loop forever", replies.append, config)
     assert len(replies) == 1
     assert "limit" in replies[0].lower()
@@ -94,7 +94,7 @@ def test_orchestrator_max_iterations():
 def test_orchestrator_clear_session():
     """clear_session removes history for a session."""
     from src.orchestrator import clear_session
-    with patch("src.orchestrator.chat_completion") as mock_llm:
+    with patch("src.agents.orchestrator.chat_completion") as mock_llm:
         mock_llm.return_value = {"content": "Hi!", "tool_calls": None}
         handler("Hello", lambda x: None, TEST_CONFIG, session_id="test")
     assert "test" in conversations
