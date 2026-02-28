@@ -41,6 +41,7 @@ graph LR
 | | |
 |---|---|
 | **Two-tier LLM** | Orchestrator handles conversation; agent handles execution. Neither knows about the other's concerns. |
+| **Pluggable agents** | `--agent orchestrator` (default), `--agent single`, or `--agent base`. Add your own in `src/agents/`. |
 | **One tool each** | Orchestrator gets `execute_task`. Agent gets `execute_bash`. That's it. |
 | **Swap any model** | Change one line in `config.yaml` — Claude, GPT-4, Kimi K2, Minimax, anything LiteLLM supports. |
 | **Three channels, same interface** | CLI, Telegram, Gmail. Each is ~50 lines. Adding a new channel is one function. |
@@ -51,6 +52,14 @@ graph LR
 ```bash
 docker build -t playbook_3 .
 docker run -it --env-file .env playbook_3
+```
+
+Or pick an agent:
+
+```bash
+python main.py --channel cli --agent single       # Direct agent loop
+python main.py --channel cli --agent base          # Multi-tool experimental agent
+python main.py --channel cli --agent orchestrator  # Two-tier (default)
 ```
 
 ## Learn More

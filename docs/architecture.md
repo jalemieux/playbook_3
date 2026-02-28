@@ -4,8 +4,10 @@
 
 | Component | File | Role |
 |-----------|------|------|
-| **Orchestrator** | `src/orchestrator.py` | Conversation-aware layer; maintains session history, delegates tasks to agent via `execute_task` tool |
-| **Agent** | `src/agent.py` | Stateless task executor; takes a text intent, runs bash tools, returns result string |
+| **Agent Registry** | `src/agents/__init__.py` | Registry of available agents; `get_agent(name)` / `get_clear_session(name)`; default is `orchestrator` |
+| **Orchestrator Agent** | `src/agents/orchestrator.py` | Conversation-aware layer; maintains session history, delegates tasks to agent via `execute_task` tool |
+| **Single Agent** | `src/agents/single.py` | Direct agent loop; stateless task executor with `execute_bash` tool |
+| **Base Agent** | `src/agents/base.py` | Multi-tool experimental agent; extensible base for adding new tools beyond bash |
 | **LLM** | `src/llm.py` | LiteLLM wrapper; handles tool-use protocol, accepts custom tool schemas, suppresses debug logging |
 | **Bash** | `src/bash.py` | Sandboxed bash execution with timeout |
 | **Config** | `src/config.py` | YAML config loader with env var interpolation |
@@ -13,6 +15,18 @@
 | **Telegram Channel** | `src/channels/telegram.py` | Telegram bot via python-telegram-bot; user whitelist support |
 | **Gmail Channel** | `src/channels/gmail.py` | Gmail polling via Google API |
 | **Eval** | `src/eval.py` | Multi-model evaluation with LLM-as-judge scoring (6 models × 5 prompts) |
+
+## Agent Registry
+
+Agents live in `src/agents/` and follow a registry pattern. Each agent module exports a `handler` and `clear_session` function. The registry (`src/agents/__init__.py`) maps agent names to their handlers:
+
+| Agent | `--agent` flag | Description |
+|-------|---------------|-------------|
+| `orchestrator` | `--agent orchestrator` (default) | Two-tier: orchestrator delegates to a sub-agent |
+| `single` | `--agent single` | Direct agent loop with `execute_bash` |
+| `base` | `--agent base` | Multi-tool experimental agent |
+
+Select an agent at startup via `--agent <name>`. The default is `orchestrator`.
 
 ## Data Flow
 
@@ -82,3 +96,4 @@ Channels import `handler` from `src.orchestrator` (previously from `src.agent`).
 
 - **2026-02-24**: Added orchestrator layer with conversation history, execute_task tool, session management
 - **2026-02-24**: Renamed config `model` → `agent_model`; CLI shows both models at startup with ctrl+e collapsed/expanded toggle and sub-agent call nesting; suppressed LiteLLM debug logging; eval swapped gpt-4o for gpt-4.1 models, replaced file-backup prompt with largest-files
+- **2026-02-27**: Added agent registry (`src/agents/`) with `orchestrator`, `single`, and `base` agents; `--agent` flag for agent selection at startup
