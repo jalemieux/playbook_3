@@ -14,15 +14,10 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s %(name)s %(levelname
 logging.getLogger("httpx").setLevel(logging.WARNING)
 
 # Map PB3_* env vars to the standard names LiteLLM expects
-for pb3_var, standard_var in [
-    ("PB3_ANTHROPIC_API_KEY", "ANTHROPIC_API_KEY"),
-    ("PB3_OPENAI_API_KEY", "OPENAI_API_KEY"),
-    ("PB3_GEMINI_API_KEY", "GEMINI_API_KEY"),
-    ("PB3_MINIMAX_API_KEY", "MINIMAX_API_KEY"),
-]:
-    val = os.environ.get(pb3_var)
-    if val:
-        os.environ[standard_var] = val
+os.environ["ANTHROPIC_API_KEY"] = os.environ["PB3_ANTHROPIC_API_KEY"]
+os.environ["OPENAI_API_KEY"] = os.environ["PB3_OPENAI_API_KEY"]
+os.environ["GEMINI_API_KEY"] = os.environ["PB3_GEMINI_API_KEY"]
+os.environ["MINIMAX_API_KEY"] = os.environ["PB3_MINIMAX_API_KEY"]
 
 
 def main():
