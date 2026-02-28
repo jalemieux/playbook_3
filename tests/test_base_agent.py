@@ -1,8 +1,7 @@
 import json
 from unittest.mock import patch
 
-from src.agents.base import handler, clear_session, conversations
-from src.tools import get_schemas_for_config
+from src.agents.base import handler, clear_session, conversations, TOOLS
 
 TEST_CONFIG = {
     "agent_model": "anthropic/claude-sonnet-4",
@@ -93,20 +92,16 @@ def test_max_iterations():
     assert "limit" in replies[0].lower()
 
 
-def test_uses_tools_from_config():
-    """Tools are resolved from config via get_schemas_for_config."""
-    schemas = get_schemas_for_config(TEST_CONFIG)
-    names = [s["function"]["name"] for s in schemas]
+def test_tools_list_contains_bash():
+    """TOOLS list includes bash schema."""
+    names = [t["function"]["name"] for t in TOOLS]
     assert "execute_bash" in names
 
 
-def test_passes_configured_tools_to_llm():
-    """Configured tools are passed to chat_completion."""
-    config = {**TEST_CONFIG, "agent_tool_profile": "claude_code"}
+def test_passes_tools_to_llm():
+    """TOOLS list is passed to chat_completion."""
     with patch("src.agents.base.chat_completion") as mock_llm:
         mock_llm.return_value = {"content": "Ok", "tool_calls": None}
-        handler("Hi", lambda x: None, config)
+        handler("Hi", lambda x: None, TEST_CONFIG)
     passed_tools = mock_llm.call_args[1]["tools"]
-    names = [t["function"]["name"] for t in passed_tools]
-    assert "Bash" in names
-    assert "Read" in names
+    assert passed_tools == TOOLS

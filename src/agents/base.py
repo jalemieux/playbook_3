@@ -2,7 +2,8 @@
 import json
 
 from src.llm import chat_completion
-from src.tools import execute_tool_call, get_schemas_for_config
+from src.tools import execute_tool_call
+from src.tools.bash_tool import EXECUTE_BASH_SCHEMA
 
 SYSTEM_PROMPT = """You are a personal assistant. Use your tools to accomplish tasks on the user's computer.
 
@@ -12,6 +13,9 @@ When you receive a message:
 - If you're unsure what the user wants, ask.
 
 Keep replies short and direct."""
+
+# Tools this agent can use — add/remove schemas here
+TOOLS = [EXECUTE_BASH_SCHEMA]
 
 # In-memory conversation store
 conversations: dict[str, list[dict]] = {}
@@ -32,8 +36,6 @@ def handler(text: str, reply_fn, config: dict, session_id: str = "default", stat
     """Process a user message through the base agent."""
     model = config["agent_model"]
     max_iter = config.get("max_iterations", 10)
-    tools = get_schemas_for_config(config)
-
     if session_id not in conversations:
         conversations[session_id] = []
     history = conversations[session_id]
@@ -44,7 +46,7 @@ def handler(text: str, reply_fn, config: dict, session_id: str = "default", stat
     for i in range(max_iter):
         if status_fn:
             status_fn("thinking", "")
-        result = chat_completion(messages, model, tools=tools)
+        result = chat_completion(messages, model, tools=TOOLS)
         if status_fn:
             status_fn("done_thinking", "")
 
