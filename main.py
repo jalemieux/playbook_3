@@ -1,6 +1,7 @@
 import argparse
 import logging
 import os
+import queue
 from pathlib import Path
 
 from dotenv import load_dotenv
@@ -9,6 +10,7 @@ load_dotenv()
 
 from src.config import load_config
 from src.agents.factory import create_agent_one
+from src.background import start_background_notifier
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(name)s %(levelname)s %(message)s")
 logging.getLogger("httpx").setLevel(logging.WARNING)
@@ -38,11 +40,14 @@ def main():
         context_dir_path=agent_cfg.get("context_dir_path"),   
         identity_file_path=agent_cfg.get("identity_file_path"),
         name=args.agent)
-    
+
+    # system notification (e.g. you got a new email)
+    notification_queue: queue.Queue[str | object] = queue.Queue()
+    start_background_notifier(notification_queue, interval_sec=60)
 
     if args.channel == "cli":
         from src.channels.cli import run_cli
-        run_cli(agent, config)
+        run_cli(agent, config, notification_queue)
     # elif args.channel == "telegram":
     #     from src.channels.telegram import start_telegram
     #     start_telegram(config)
