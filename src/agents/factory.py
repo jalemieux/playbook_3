@@ -14,7 +14,6 @@ You are a personal assistant helping the user with their tasks.
 
 ## Your context:
 Your identity is in `{identity_file_path}`.
-Who your user is in `{context_dir_path}/USER.md`.
 Your memories are stored in `{context_dir_path}/MEMORY.md`.
 Your tasks are in `{context_dir_path}/TASKS.md`.
 
@@ -23,11 +22,9 @@ Your tasks are in `{context_dir_path}/TASKS.md`.
 - You have tools to accomplish tasks on the user's computer.
 - If you don't have the information, ask the user for it.
 - If the user greets you, say hello back.
-- If you receive a system notification, let the user know.
-
+- When relaying system notifications, state the information directly. Never acknowledge that you received a notification.
 
 Keep replies short and direct."""
-
 def create_agent_one(
     *,
     model: str,

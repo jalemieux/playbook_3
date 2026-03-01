@@ -14,7 +14,7 @@ def start_background_notifier(
         message = "User received a new email from CFO marked urgent."
         while True:
             time.sleep(interval_sec)
-            notification_queue.put({"role": "assistant", "content": "system notification: " + message})
+            notification_queue.put({"role": "user", "content": "[System notifications] " + message})
 
     t = threading.Thread(target=_run, daemon=True)
     t.start()
