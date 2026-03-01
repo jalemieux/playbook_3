@@ -2,15 +2,12 @@
 import json
 
 from src.llm import chat_completion
-from src.tools import execute_tool_call, get_schemas_for_config
+from src.tools import execute_tool_call
+from src.tools.bash_tool import EXECUTE_BASH_SCHEMA
+from src.tools.fs_tools import GLOB_SCHEMA, GREP_SCHEMA, READ_SCHEMA, EDIT_SCHEMA, WRITE_SCHEMA
 from src.tools.utils import truncate
 
 SYSTEM_PROMPT = """You are a personal assistant. Use your tools to accomplish tasks on the user's computer.
-
-When you receive a message:
-- If it requires action, use your tools to accomplish it.
-- If it's conversational, just reply.
-- If you're unsure what the user wants, ask.
 
 ## Your context: 
 
@@ -19,10 +16,13 @@ Your identity is in ./IDENTITY.md
 Your tasks are in ./TASKS.md
 
 ## Response Protocol
+- Before asking the user for information, ALWAYS search your context first.
+- If you don't have the information, ask the user for it.
 
-Before asking the user for information, ALWAYS search your context first.
 
 Keep replies short and direct."""
+
+TOOLS = [GLOB_SCHEMA, GREP_SCHEMA, READ_SCHEMA, EDIT_SCHEMA, WRITE_SCHEMA]
 
 # In-memory conversation store
 conversations: dict[str, list[dict]] = {}
@@ -37,7 +37,6 @@ def handler(text: str, reply_fn, config: dict, session_id: str = "default", stat
     """Process a user message through the base agent."""
     model = config["base_model"]
     max_iter = config.get("base_max_iterations", 10)
-    tools = get_schemas_for_config(config)
     if session_id not in conversations:
         conversations[session_id] = []
     history = conversations[session_id]
@@ -48,7 +47,7 @@ def handler(text: str, reply_fn, config: dict, session_id: str = "default", stat
     for i in range(max_iter):
         if status_fn:
             status_fn("thinking", "")
-        result = chat_completion(messages, model, tools=tools)
+        result = chat_completion(messages, model, tools=TOOLS)
         if status_fn:
             status_fn("done_thinking", "")
 

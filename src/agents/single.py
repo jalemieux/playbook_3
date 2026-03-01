@@ -1,7 +1,9 @@
 import json
 
 from src.llm import chat_completion
-from src.tools import execute_tool_call, get_schemas_for_config
+from src.tools import execute_tool_call
+from src.tools.bash_tool import EXECUTE_BASH_SCHEMA
+from src.tools.fs_tools import GLOB_SCHEMA, GREP_SCHEMA, READ_SCHEMA, EDIT_SCHEMA, WRITE_SCHEMA
 from src.tools.utils import truncate
 
 
@@ -14,11 +16,12 @@ When you receive a message:
 
 Keep replies short and direct."""
 
+TOOLS = [EXECUTE_BASH_SCHEMA, GLOB_SCHEMA, GREP_SCHEMA, READ_SCHEMA, EDIT_SCHEMA, WRITE_SCHEMA]
+
 
 def run(text: str, config: dict, status_fn=None) -> str:
     model = config["agent_model"]
     max_iter = config.get("max_iterations", 10)
-    tools = get_schemas_for_config(config)
 
     messages = [
         {"role": "system", "content": SYSTEM_PROMPT},
@@ -28,7 +31,7 @@ def run(text: str, config: dict, status_fn=None) -> str:
     for i in range(max_iter):
         if status_fn:
             status_fn("thinking", "")
-        result = chat_completion(messages, model, tools=tools)
+        result = chat_completion(messages, model, tools=TOOLS)
         if status_fn:
             status_fn("done_thinking", "")
 
