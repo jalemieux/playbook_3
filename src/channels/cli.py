@@ -1,8 +1,16 @@
+import queue
+import select
 import sys
 import threading
 import time
 
 from src.agents.agent_one import AgentOne
+
+# Sentinel: put on the notification queue to signal exit.
+_CLI_QUIT = object()
+
+# Poll interval (seconds) when waiting for stdin or queue.
+_POLL_TIMEOUT = 0.1
 
 DIM = "\033[2m"
 BOLD = "\033[1m"
@@ -101,8 +109,17 @@ def _reply(text: str) -> None:
     print()
 
 
-def run_cli(agent: AgentOne, config: dict) -> None:
-    """Interactive CLI for testing the agent."""
+def _prompt(notification_queue: queue.Queue[str | object] | None = None) -> None:
+    if notification_queue is not None:
+        n = notification_queue.qsize()
+        if n > 0:
+            sys.stdout.write(f"{DIM}[{n}]{RESET} ")
+    sys.stdout.write(f"{GREEN}> {RESET}")
+    sys.stdout.flush()
+
+
+def run_cli(agent: AgentOne, config: dict, notification_queue: queue.Queue[str | object]) -> None:
+    """Interactive CLI. Main loop polls: stdin (user input) else system notification queue."""
     global _verbose
 
     mode = f"{DIM}collapsed{RESET}" if not _verbose else f"{DIM}expanded{RESET}"
@@ -111,15 +128,38 @@ def run_cli(agent: AgentOne, config: dict) -> None:
     print(f"  {DIM}model:        {RESET}{agent.model}")
     print(f"  {DIM}tool output:  {RESET}{mode}")
     print()
+    _prompt(notification_queue)
 
     while True:
-        try:
-            text = input(f"{GREEN}> {RESET}")
-        except (EOFError, KeyboardInterrupt):
-            print()
-            break
+        # Poll: stdin first, else system notification queue.
+        r, _, _ = select.select([sys.stdin], [], [], _POLL_TIMEOUT)
+        if r:
+            try:
+                line = sys.stdin.readline()
+            except (EOFError, KeyboardInterrupt):
+                print()
+                break
+            if not line:
+                break
+            text = line.rstrip("\n")
+            role, content = "user", text
+        else:
+            # No stdin; check system notification queue.
+            try:
+                message = notification_queue.get_nowait()
+            except queue.Empty:
+                continue
+            if message is _CLI_QUIT:
+                print()
+                break
+            role = message.get("role")
+            content = message.get("content")
 
-        stripped = text.strip().lower()
+        if not content.strip():
+            _prompt(notification_queue)
+            continue
+
+        stripped = content.strip().lower()
         if stripped in ("quit", "exit"):
             break
 
@@ -128,12 +168,15 @@ def run_cli(agent: AgentOne, config: dict) -> None:
             mode_label = "expanded" if _verbose else "collapsed"
             print(f"  {DIM}tool output: {mode_label}{RESET}")
             print()
+            _prompt(notification_queue)
             continue
 
         if stripped in ("/clear", "/reset"):
             agent.clear_session("cli")
             print(f"  {DIM}conversation cleared{RESET}")
             print()
+            _prompt(notification_queue)
             continue
 
-        agent.handler(text, _reply, config, session_id="cli", status_fn=_make_status_fn())
+        agent.handler(role, content, _reply, config, session_id="cli", status_fn=_make_status_fn())
+        _prompt(notification_queue)

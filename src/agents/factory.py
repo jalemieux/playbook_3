@@ -2,13 +2,31 @@
 
 from pathlib import Path
 
-from src.agents.agent_one import AgentOne, DEFAULT_SYSTEM_PROMPT, DEFAULT_TOOLS
+from src.agents.agent_one import AgentOne, DEFAULT_TOOLS
 
 # Named tool sets for convenience
 TOOL_SETS: dict[str, list[dict]] = {
     "default": DEFAULT_TOOLS,
 }
 
+DEFAULT_SYSTEM_PROMPT = """
+You are a personal assistant helping the user with their tasks. 
+
+## Your context:
+Your identity is in `{identity_file_path}`.
+Who your user is in `{context_dir_path}/USER.md`.
+Your memories are stored in `{context_dir_path}/MEMORY.md`.
+Your tasks are in `{context_dir_path}/TASKS.md`.
+
+## Response Protocol
+- Before asking the user for information, ALWAYS search your context first.
+- You have tools to accomplish tasks on the user's computer.
+- If you don't have the information, ask the user for it.
+- If the user greets you, say hello back.
+- If you receive a system notification, let the user know.
+
+
+Keep replies short and direct."""
 
 def create_agent_one(
     *,
@@ -26,11 +44,12 @@ def create_agent_one(
     - name: Agent name for logging/registry.
     """
     identity_prompt = Path(identity_file_path).read_text()
-    
+    system_prompt = DEFAULT_SYSTEM_PROMPT.format(context_dir_path=context_dir_path, identity_file_path=identity_file_path)
+    print(system_prompt)
     return AgentOne(
         model=model,
         max_iterations=max_iterations,
-        system_prompt=identity_prompt + DEFAULT_SYSTEM_PROMPT.format(context_dir_path=context_dir_path),
+        system_prompt=system_prompt,
         tools=DEFAULT_TOOLS,
         name=name,
     )

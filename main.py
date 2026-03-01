@@ -43,7 +43,7 @@ def main():
 
     # system notification (e.g. you got a new email)
     notification_queue: queue.Queue[str | object] = queue.Queue()
-    start_background_notifier(notification_queue, interval_sec=60)
+    start_background_notifier(notification_queue, interval_sec=10)
 
     if args.channel == "cli":
         from src.channels.cli import run_cli

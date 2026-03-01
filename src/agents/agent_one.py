@@ -1,6 +1,6 @@
 """Stateful multi-tool experimental agent."""
 import json
-from typing import Optional
+from typing import Callable, Optional
 
 from src.llm import chat_completion
 from src.tools import execute_tool_call
@@ -8,18 +8,7 @@ from src.tools.bash_tool import EXECUTE_BASH_SCHEMA
 from src.tools.fs_tools import GLOB_SCHEMA, GREP_SCHEMA, READ_SCHEMA, EDIT_SCHEMA, WRITE_SCHEMA
 from src.tools.utils import truncate
 
-DEFAULT_SYSTEM_PROMPT = """
 
-## Your context:
-Your memories are stored in ${context_dir_path}/MEMORY.md
-Your tasks are in ${context_dir_path}/TASKS.md
-
-## Response Protocol
-- Before asking the user for information, ALWAYS search your context first.
-- If you don't have the information, ask the user for it.
-
-
-Keep replies short and direct."""
 
 DEFAULT_TOOLS = [GLOB_SCHEMA, GREP_SCHEMA, READ_SCHEMA, EDIT_SCHEMA, WRITE_SCHEMA]
 
@@ -54,8 +43,8 @@ class AgentOne:
 
     def handler(
         self,
-        text: str,
-        reply_fn,
+        role: str, content: str,
+        reply_fn: Callable[[str], None],
         config: dict,
         session_id: str = "default",
         status_fn=None,
@@ -65,7 +54,7 @@ class AgentOne:
             self._conversations[session_id] = []
         history = self._conversations[session_id]
 
-        history.append({"role": "user", "content": text})
+        history.append({"role": role, "content": content})
         messages = [{"role": "system", "content": self.system_prompt}] + history
 
         for i in range(self.max_iterations):
