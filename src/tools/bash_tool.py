@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
+import subprocess
 from typing import Any
 
-from src.bash import execute_bash
 from src.tools.utils import truncate
 
 EXECUTE_BASH_SCHEMA: dict[str, Any] = {
@@ -70,7 +70,13 @@ def exec_bash(args: dict[str, Any], config: dict, status_fn=None) -> str:
         status_fn("tool_call", f'Bash("{command}")')
 
     try:
-        output = execute_bash(command, timeout=timeout)
+        result = subprocess.run(
+            ["bash", "-c", command],
+            capture_output=True,
+            text=True,
+            timeout=timeout,
+        )
+        output = result.stdout + result.stderr
     except TimeoutError as e:
         output = f"Error: {e}"
 

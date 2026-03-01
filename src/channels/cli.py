@@ -1,9 +1,8 @@
-import readline
 import sys
 import threading
 import time
 
-from src.agents import get_agent, get_clear_session
+from src.agents.agent_one import AgentOne
 
 DIM = "\033[2m"
 BOLD = "\033[1m"
@@ -102,20 +101,14 @@ def _reply(text: str) -> None:
     print()
 
 
-def run_cli(config: dict) -> None:
+def run_cli(agent: AgentOne, config: dict) -> None:
     """Interactive CLI for testing the agent."""
     global _verbose
 
-    agent_name = config.get("agent", "orchestrator")
-    agent_handler = get_agent(agent_name)
-    agent_clear = get_clear_session(agent_name)
-
     mode = f"{DIM}collapsed{RESET}" if not _verbose else f"{DIM}expanded{RESET}"
     print(f"{BOLD}Agent CLI{RESET}  {DIM}ctrl+e: toggle tool output | /clear: reset | 'quit' to exit{RESET}")
-    print(f"  {DIM}agent:        {RESET}{agent_name}")
-    model_keys = {"base": "base_model", "orchestrator": "orchestrator_model", "single": "agent_model"}
-    model = config.get(model_keys.get(agent_name, "agent_model"), "unknown")
-    print(f"  {DIM}model:        {RESET}{model}")
+    print(f"  {DIM}agent:        {RESET}{agent.name}")
+    print(f"  {DIM}model:        {RESET}{agent.model}")
     print(f"  {DIM}tool output:  {RESET}{mode}")
     print()
 
@@ -138,9 +131,9 @@ def run_cli(config: dict) -> None:
             continue
 
         if stripped in ("/clear", "/reset"):
-            agent_clear("cli")
+            agent.clear_session("cli")
             print(f"  {DIM}conversation cleared{RESET}")
             print()
             continue
 
-        agent_handler(text, _reply, config, session_id="cli", status_fn=_make_status_fn())
+        agent.handler(text, _reply, config, session_id="cli", status_fn=_make_status_fn())

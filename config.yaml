@@ -1,10 +1,15 @@
-agent_model: anthropic/claude-haiku-4-5
-base_model: anthropic/claude-sonnet-4-6
-base_max_iterations: 10
-orchestrator_model: anthropic/claude-sonnet-4-6
-orchestrator_max_iterations: 5
-telegram_bot_token: ${PB3_TELEGRAM_BOT_TOKEN}
-telegram_allowed_users: ${PB3_TELEGRAM_ALLOWED_USERS}  # Comma-separated user IDs. Empty = allow all.
-gmail_credentials_path: ./credentials.json
-bash_timeout: 30
-max_iterations: 10
+# agent profile used in cli
+agent_profiles: 
+  agent_prime:
+    model: anthropic/claude-haiku-4-5
+    max_iterations: 10
+    identity_file_path: ./agent_prime.md
+    context_dir_path: ./context
+
+
+#agent_model: anthropic/claude-haiku-4-5
+#telegram_bot_token: ${PB3_TELEGRAM_BOT_TOKEN}
+#telegram_allowed_users: ${PB3_TELEGRAM_ALLOWED_USERS}  # Comma-separated user IDs. Empty = allow all.
+#gmail_credentials_path: ./credentials.json
+#bash_timeout: 30
+#max_iterations: 10
